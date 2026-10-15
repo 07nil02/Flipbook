@@ -432,12 +432,15 @@
     .selected-file-panel {
       display: none;
       max-width: 640px;
+      width: 100%;
       margin: 1.5rem auto 0;
       background: var(--bg-warm);
       border: 1px solid var(--border-light);
       border-radius: var(--radius-md);
       padding: 1.25rem 1.5rem;
       text-align: left;
+      box-sizing: border-box;
+      overflow: hidden;
     }
 
     .selected-file-panel.active {
@@ -451,13 +454,28 @@
       gap: 1rem;
       padding-bottom: 1rem;
       border-bottom: 1px solid var(--border-light);
+      min-width: 0;
+      width: 100%;
     }
 
     .file-info {
       display: flex;
       align-items: center;
       gap: 0.85rem;
+      flex: 1;
       min-width: 0;
+      overflow: hidden;
+    }
+
+    .file-info svg {
+      flex-shrink: 0;
+    }
+
+    .file-text-col,
+    .file-info > div {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
     }
 
     .file-name {
@@ -467,12 +485,19 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      display: block;
+      max-width: 100%;
     }
 
     .file-size {
       font-family: var(--font-mono);
       font-size: 0.78rem;
       color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .file-meta-row #remove-file-btn {
+      flex-shrink: 0;
     }
 
     .book-config-row {
@@ -738,26 +763,47 @@
     .reader-stage {
       flex: 1;
       position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: block;
       overflow: hidden;
-      padding: 1.5rem 3.5rem;
+      padding: 0;
       background: radial-gradient(circle at center, #2B2925 0%, #191816 100%);
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: pan-x pan-y;
     }
 
     .reader-stage.zoomed {
       overflow: auto;
       cursor: grab;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.25) rgba(0, 0, 0, 0.2);
     }
 
     .reader-stage.zoomed:active {
       cursor: grabbing;
     }
 
+    .reader-stage.zoomed::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    .reader-stage.zoomed::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .reader-stage.zoomed::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.25);
+      border-radius: 4px;
+    }
+
+    .reader-stage.zoomed::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.4);
+    }
+
     /* Side Navigation Floating Arrows */
     .stage-nav-arrow {
-      position: absolute;
+      position: fixed;
       top: 50%;
       transform: translateY(-50%);
       width: 44px;
@@ -771,7 +817,7 @@
       justify-content: center;
       cursor: pointer;
       z-index: 25;
-      transition: all 0.15s ease;
+      transition: background 0.15s ease, color 0.15s ease, opacity 0.15s ease;
       backdrop-filter: blur(4px);
     }
 
@@ -790,18 +836,20 @@
 
     /* Zoom Transform Wrapper */
     .book-zoom-layer {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
-      transform-origin: center center;
       position: relative;
+      flex-shrink: 0;
+      box-sizing: border-box;
+      transition: width 0.18s ease-out, height 0.18s ease-out, margin 0.18s ease-out;
     }
 
     /* StPageFlip Container & Realistic Book Styling */
     #flipbook-container {
       box-shadow: var(--shadow-book);
-      position: relative;
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform-origin: 0 0;
+      transition: transform 0.18s ease-out;
     }
 
     /* CRITICAL FIX: Do not set overflow:hidden or position:relative on .flip-page
@@ -1220,7 +1268,7 @@
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                   <polyline points="14 2 14 8 20 8"></polyline>
                 </svg>
-                <div>
+                <div class="file-text-col">
                   <div class="file-name" id="selected-file-name">document.pdf</div>
                   <div class="file-size" id="selected-file-size">0 MB</div>
                 </div>
@@ -1731,6 +1779,7 @@
 
     AppState.selectedFile = file;
     UI.fileName.textContent = file.name;
+    UI.fileName.title = file.name;
     UI.fileSize.textContent = formatFileSize(file.size);
     UI.selectedPanel.classList.add('active');
     UI.passwordPanel.classList.remove('active');
@@ -1742,6 +1791,7 @@
     if (AppState.isProcessing) AppState.cancelRequested = true;
     AppState.selectedFile = null;
     UI.fileInput.value = '';
+    UI.fileName.title = '';
     UI.selectedPanel.classList.remove('active');
     UI.passwordPanel.classList.remove('active');
     UI.progressPanel.classList.remove('active');
@@ -2149,6 +2199,10 @@
       }
     });
 
+    AppState.baseBookWidth = width * (isSinglePageViewport ? 1 : 2);
+    AppState.baseBookHeight = height;
+    applyZoom(AppState.zoomLevel || 1);
+
     updateNavigationState();
   }
 
@@ -2263,12 +2317,56 @@
 
   function applyZoom(newZoom) {
     const clamped = Math.min(2.25, Math.max(0.75, newZoom));
+    const prevZoom = AppState.zoomLevel || 1;
     AppState.zoomLevel = clamped;
-    UI.bookZoomLayer.style.transform = `scale(${clamped})`;
+
+    const baseW = AppState.baseBookWidth || 600;
+    const baseH = AppState.baseBookHeight || 800;
+    const scaledW = Math.round(baseW * clamped);
+    const scaledH = Math.round(baseH * clamped);
+
     UI.zoomReadout.textContent = `${Math.round(clamped * 100)}%`;
-    UI.readerStage.classList.toggle('zoomed', clamped > 1);
     UI.zoomOutBtn.disabled = clamped <= 0.75;
     UI.zoomInBtn.disabled = clamped >= 2.25;
+
+    const stageW = UI.readerStage.clientWidth;
+    const stageH = UI.readerStage.clientHeight;
+
+    UI.bookZoomLayer.style.width = `${scaledW}px`;
+    UI.bookZoomLayer.style.height = `${scaledH}px`;
+    UI.bookZoomLayer.style.transform = '';
+
+    const container = UI.flipbookContainer;
+    if (container) {
+      container.style.position = 'absolute';
+      container.style.top = '0';
+      container.style.left = '0';
+      container.style.transformOrigin = '0 0';
+      container.style.transform = `scale(${clamped})`;
+    }
+
+    const extraX = scaledW < stageW ? Math.max(0, Math.round((stageW - scaledW) / 2)) : 64;
+    const extraY = scaledH < stageH ? Math.max(0, Math.round((stageH - scaledH) / 2)) : 48;
+
+    UI.bookZoomLayer.style.margin = `${extraY}px ${extraX}px`;
+
+    const isZoomed = clamped > 1;
+    UI.readerStage.classList.toggle('zoomed', isZoomed);
+    UI.readerStage.style.cursor = isZoomed ? 'grab' : '';
+
+    if (stageW > 0 && stageH > 0) {
+      if (clamped === 1) {
+        UI.readerStage.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+      } else if (clamped !== prevZoom) {
+        const ratio = clamped / prevZoom;
+        const currentCenterX = UI.readerStage.scrollLeft + stageW / 2;
+        const currentCenterY = UI.readerStage.scrollTop + stageH / 2;
+        const newCenterX = currentCenterX * ratio;
+        const newCenterY = currentCenterY * ratio;
+        UI.readerStage.scrollLeft = Math.max(0, newCenterX - stageW / 2);
+        UI.readerStage.scrollTop = Math.max(0, newCenterY - stageH / 2);
+      }
+    }
   }
 
   function zoomIn() {
@@ -2283,7 +2381,6 @@
 
   function resetZoom() {
     applyZoom(1);
-    UI.readerStage.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
   }
 
   async function toggleFullScreen() {
@@ -2352,6 +2449,43 @@
         else zoomOut();
       }
     }, { passive: false });
+
+    // Drag-to-pan navigation when zoomed in
+    let isPanning = false;
+    let panStartX = 0;
+    let panStartY = 0;
+    let panScrollLeft = 0;
+    let panScrollTop = 0;
+
+    UI.readerStage.addEventListener('mousedown', (e) => {
+      if (AppState.zoomLevel <= 1 || e.button !== 0) return;
+      if (e.target.closest('.stage-nav-arrow') || e.target.closest('button') || e.target.closest('a')) return;
+
+      isPanning = true;
+      panStartX = e.clientX;
+      panStartY = e.clientY;
+      panScrollLeft = UI.readerStage.scrollLeft;
+      panScrollTop = UI.readerStage.scrollTop;
+      UI.readerStage.style.cursor = 'grabbing';
+      e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isPanning) return;
+      const dx = e.clientX - panStartX;
+      const dy = e.clientY - panStartY;
+      UI.readerStage.scrollLeft = panScrollLeft - dx;
+      UI.readerStage.scrollTop = panScrollTop - dy;
+    });
+
+    const stopPan = () => {
+      if (!isPanning) return;
+      isPanning = false;
+      UI.readerStage.style.cursor = AppState.zoomLevel > 1 ? 'grab' : '';
+    };
+
+    window.addEventListener('mouseup', stopPan);
+    window.addEventListener('blur', stopPan);
 
     UI.tocToggleBtn.addEventListener('click', () => UI.tocDrawer.classList.toggle('open'));
     UI.downloadPdfBtn.addEventListener('click', () => {
