@@ -1033,6 +1033,28 @@
       transition: transform 0.18s ease-out;
     }
 
+    /* Single Cover Presentation for Start and End Covers in Landscape Mode */
+    #flipbook-container.cover-view-start,
+    #flipbook-container.cover-view-end {
+      box-shadow: none !important;
+    }
+
+    #flipbook-container.cover-view-start .flip-page.--right:not([style*="display: none"]) {
+      box-shadow: var(--shadow-book) !important;
+    }
+
+    #flipbook-container.cover-view-end .flip-page.--left:not([style*="display: none"]) {
+      box-shadow: var(--shadow-book) !important;
+    }
+
+    #flipbook-container.cover-view-start .flip-page.--right::after {
+      opacity: 0 !important;
+    }
+
+    #flipbook-container.cover-view-end .flip-page.--left::after {
+      opacity: 0 !important;
+    }
+
     /* CRITICAL: Preserved backward curl fix */
     .flip-page {
       background-color: #FFFFFF !important;
@@ -2379,9 +2401,15 @@
     AppState.pageFlip.on('changeState', (e) => {
       AppState.isTurning = e.data === 'flipping';
       if (e.data === 'user_fold' || e.data === 'flipping') {
+        const container = UI.flipbookContainer;
+        if (container) {
+          container.classList.remove('cover-view-start', 'cover-view-end');
+        }
         const currentIdx = AppState.pageFlip.getCurrentPageIndex();
         const currentPdfPage = mapDomIndexToPdfPage(currentIdx) || 1;
         updateSlidingWindowCache(currentPdfPage);
+      } else if (e.data === 'read') {
+        updateNavigationState();
       }
     });
 
@@ -2459,6 +2487,15 @@
     UI.restartBookBtn.disabled = isAtStart;
     UI.stageNextBtn.disabled = isAtEnd;
     UI.toolbarNextBtn.disabled = isAtEnd;
+
+    const isStartCover = effectiveShowCover && orientation === 'landscape' && currentIdx === 0 && !AppState.isTurning;
+    const isEndCover = effectiveShowCover && orientation === 'landscape' && currentIdx === totalDomPages - 1 && !AppState.isTurning;
+
+    const container = UI.flipbookContainer;
+    if (container) {
+      container.classList.toggle('cover-view-start', isStartCover);
+      container.classList.toggle('cover-view-end', isEndCover);
+    }
   }
 
   async function turnNext() {
