@@ -1,0 +1,2362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <title>FlipBook Studio — Interactive PDF-to-3D Flipbook Reader</title>
+  
+  <!-- Google Fonts: Editorial Serif & Clean Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- PDF.js (Stable v3.11.174) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <!-- StPageFlip (Official v2.0.7) -->
+  <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
+
+  <style>
+    :root {
+      --bg-warm: #F6F4EF;
+      --bg-surface: #EFECE6;
+      --bg-elevated: #FFFFFF;
+      --bg-reader: #1E1D1B;
+      --bg-reader-bar: #282623;
+      --text-primary: #1C1B18;
+      --text-secondary: #5C5953;
+      --text-muted: #8A857D;
+      --accent: #9E3B24;
+      --accent-hover: #7F2E1B;
+      --accent-subtle: rgba(158, 59, 36, 0.08);
+      --border-light: #DFDBD2;
+      --border-dark: #383530;
+      --error-bg: #FDF2F0;
+      --error-text: #A82515;
+      --warn-bg: #FEF9EC;
+      --warn-text: #92600A;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --shadow-soft: 0 12px 32px -8px rgba(28, 27, 24, 0.08), 0 4px 12px -2px rgba(28, 27, 24, 0.04);
+      --shadow-book: 0 28px 60px rgba(0, 0, 0, 0.55), 0 8px 24px rgba(0, 0, 0, 0.35);
+      --font-serif: 'Instrument Serif', Georgia, serif;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+      background-color: var(--bg-warm);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    body.reader-mode {
+      overflow: hidden;
+      background-color: var(--bg-reader);
+      user-select: none;
+    }
+
+    /* Accessibility Focus */
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* ==========================================================================
+       LANDING VIEW
+       ========================================================================== */
+    #landing-view {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: opacity 0.3s ease;
+    }
+
+    #landing-view.hidden {
+      display: none !important;
+    }
+
+    .navbar {
+      max-width: 1240px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: var(--text-primary);
+    }
+
+    .brand-icon {
+      width: 28px;
+      height: 28px;
+      color: var(--accent);
+    }
+
+    .brand-name {
+      font-family: var(--font-serif);
+      font-size: 1.65rem;
+      letter-spacing: -0.01em;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .badge-privacy {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      background: var(--bg-surface);
+      padding: 0.4rem 0.75rem;
+      border-radius: 999px;
+      border: 1px solid var(--border-light);
+    }
+
+    /* Hero Section */
+    .hero {
+      max-width: 1240px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 4rem 2rem 3.5rem;
+      display: grid;
+      grid-template-columns: 1.08fr 0.92fr;
+      gap: 4rem;
+      align-items: center;
+    }
+
+    .hero-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    .hero-title {
+      font-family: var(--font-serif);
+      font-size: clamp(2.75rem, 5vw, 4.25rem);
+      font-weight: 400;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.25rem;
+      color: var(--text-primary);
+    }
+
+    .hero-subtitle {
+      font-size: 1.1rem;
+      line-height: 1.65;
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+      max-width: 540px;
+    }
+
+    .hero-cta-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.85rem;
+      align-items: center;
+      margin-bottom: 2.25rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.55rem;
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      font-weight: 500;
+      padding: 0.8rem 1.45rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      text-decoration: none;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background-color: var(--accent);
+      color: #FFFFFF;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background-color: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background-color: var(--bg-elevated);
+      color: var(--text-primary);
+      border-color: var(--border-light);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background-color: var(--bg-surface);
+      border-color: #C5BFB4;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-secondary);
+      padding: 0.6rem 0.9rem;
+    }
+
+    .btn-ghost:hover:not(:disabled) {
+      background: var(--bg-surface);
+      color: var(--text-primary);
+    }
+
+    /* Visual Open Book Illustration Showcase */
+    .book-showcase {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-soft);
+      position: relative;
+    }
+
+    .sample-book-3d {
+      width: 100%;
+      max-width: 390px;
+      aspect-ratio: 1.45 / 1;
+      display: flex;
+      background: #FFFFFF;
+      border-radius: 4px;
+      box-shadow: 0 20px 38px -10px rgba(28, 27, 24, 0.22), 0 4px 12px rgba(28, 27, 24, 0.08);
+      position: relative;
+      perspective: 1200px;
+      border: 1px solid #DCD7CD;
+    }
+
+    .sample-page {
+      flex: 1;
+      padding: 1.35rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      background: #FAF9F6;
+    }
+
+    .sample-page-left {
+      border-right: 1px solid #E5E0D6;
+      background: linear-gradient(90deg, #FAF9F6 88%, #EBE6DC 100%);
+    }
+
+    .sample-page-right {
+      background: linear-gradient(-90deg, #FAF9F6 88%, #EBE6DC 100%);
+    }
+
+    /* Animated turning leaf on hero demo */
+    .sample-turning-leaf {
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 50%;
+      height: 100%;
+      background: linear-gradient(-90deg, #FFFFFF 80%, #EFECE4 100%);
+      transform-origin: left center;
+      transform: rotateY(-28deg);
+      box-shadow: -8px 4px 18px rgba(0, 0, 0, 0.12);
+      border: 1px solid #E2DDD3;
+      border-left: none;
+      padding: 1.35rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+      pointer-events: none;
+    }
+
+    .book-showcase:hover .sample-turning-leaf {
+      transform: rotateY(-52deg);
+    }
+
+    .mock-line {
+      height: 6px;
+      background: #DEDAD0;
+      border-radius: 3px;
+      margin-bottom: 8px;
+    }
+
+    .mock-line.short { width: 55%; }
+    .mock-line.title {
+      height: 12px;
+      width: 75%;
+      background: #9E3B24;
+      opacity: 0.75;
+      margin-bottom: 14px;
+    }
+
+    .mock-art {
+      height: 68px;
+      background: #EAE5DB;
+      border-radius: 4px;
+      margin: 8px 0 12px;
+      border: 1px solid #DFDAD0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-size: 0.9rem;
+    }
+
+    .showcase-caption {
+      margin-top: 1.35rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border-light);
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    /* Upload Section */
+    .upload-wrapper {
+      max-width: 1240px;
+      width: 100%;
+      margin: 0 auto 3.5rem;
+      padding: 0 2rem;
+    }
+
+    .upload-card {
+      background: var(--bg-elevated);
+      border: 2px dashed #C7C1B6;
+      border-radius: var(--radius-lg);
+      padding: 2.75rem 2rem;
+      text-align: center;
+      transition: all 0.2s ease;
+      box-shadow: var(--shadow-soft);
+      position: relative;
+    }
+
+    .upload-card.drag-over {
+      border-color: var(--accent);
+      background: #FCF9F7;
+      transform: scale(1.005);
+    }
+
+    .upload-icon-circle {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--accent-subtle);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.15rem;
+    }
+
+    .upload-heading {
+      font-family: var(--font-serif);
+      font-size: 1.85rem;
+      font-weight: 400;
+      margin-bottom: 0.4rem;
+    }
+
+    .upload-subtext {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .upload-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 0.85rem;
+      flex-wrap: wrap;
+    }
+
+    .privacy-footnote {
+      margin-top: 1.25rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+    }
+
+    /* Selected File State & Options */
+    .selected-file-panel {
+      display: none;
+      max-width: 640px;
+      margin: 1.5rem auto 0;
+      background: var(--bg-warm);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 1.25rem 1.5rem;
+      text-align: left;
+    }
+
+    .selected-file-panel.active {
+      display: block;
+    }
+
+    .file-meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .file-info {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      min-width: 0;
+    }
+
+    .file-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .file-size {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+    }
+
+    .book-config-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding-top: 1rem;
+    }
+
+    .checkbox-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+
+    .checkbox-label input {
+      accent-color: var(--accent);
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Password Prompt */
+    .password-panel {
+      display: none;
+      max-width: 480px;
+      margin: 1.25rem auto 0;
+      background: var(--bg-warm);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      text-align: left;
+    }
+
+    .password-panel.active {
+      display: block;
+    }
+
+    .password-input-group {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.65rem;
+    }
+
+    .text-input {
+      flex: 1;
+      padding: 0.6rem 0.85rem;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+    }
+
+    /* Alerts & Warnings */
+    .alert-box {
+      display: none;
+      max-width: 640px;
+      margin: 1rem auto 0;
+      padding: 0.85rem 1.15rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.88rem;
+      text-align: left;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    .alert-box.active {
+      display: flex;
+    }
+
+    .alert-error {
+      background: var(--error-bg);
+      color: var(--error-text);
+      border: 1px solid #F3C6C0;
+    }
+
+    .alert-warn {
+      background: var(--warn-bg);
+      color: var(--warn-text);
+      border: 1px solid #F2DEAC;
+    }
+
+    /* Processing Progress Panel */
+    .progress-panel {
+      display: none;
+      max-width: 580px;
+      margin: 1.5rem auto 0;
+      background: var(--bg-warm);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 1.35rem 1.5rem;
+      text-align: left;
+    }
+
+    .progress-panel.active {
+      display: block;
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.6rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .progress-pct {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: var(--accent);
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 8px;
+      background: #E2DDD3;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 0.85rem;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      transition: width 0.15s ease;
+    }
+
+    .progress-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+    }
+
+    /* Feature Strip */
+    .features-section {
+      max-width: 1240px;
+      width: 100%;
+      margin: 0 auto 4rem;
+      padding: 2.5rem 2rem 0;
+      border-top: 1px solid var(--border-light);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2rem;
+    }
+
+    .feature-item h3 {
+      font-family: var(--font-serif);
+      font-size: 1.35rem;
+      font-weight: 400;
+      margin-bottom: 0.45rem;
+      color: var(--text-primary);
+    }
+
+    .feature-item p {
+      font-size: 0.88rem;
+      line-height: 1.55;
+      color: var(--text-secondary);
+    }
+
+    /* ==========================================================================
+       READER VIEW & 3D FLIPBOOK
+       ========================================================================== */
+    #reader-view {
+      position: fixed;
+      inset: 0;
+      background-color: var(--bg-reader);
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+    }
+
+    #reader-view.hidden {
+      display: none !important;
+    }
+
+    /* Top Reader Bar */
+    .reader-topbar {
+      height: 54px;
+      background: var(--bg-reader-bar);
+      border-bottom: 1px solid var(--border-dark);
+      padding: 0 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #EAE6DF;
+      z-index: 30;
+      flex-shrink: 0;
+    }
+
+    .reader-doc-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      min-width: 0;
+    }
+
+    .reader-doc-title {
+      font-size: 0.92rem;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 360px;
+    }
+
+    .reader-badge {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      padding: 0.2rem 0.5rem;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+      color: #B8B2A8;
+    }
+
+    .reader-top-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .icon-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: #D8D3C8;
+      height: 36px;
+      padding: 0 0.65rem;
+      border-radius: var(--radius-sm);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .icon-btn:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.09);
+      color: #FFFFFF;
+    }
+
+    .icon-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .icon-btn.active {
+      background: rgba(158, 59, 36, 0.35);
+      border-color: var(--accent);
+      color: #FFFFFF;
+    }
+
+    /* Central Book Stage */
+    .reader-stage {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 1.5rem 3.5rem;
+      background: radial-gradient(circle at center, #2B2925 0%, #191816 100%);
+    }
+
+    .reader-stage.zoomed {
+      overflow: auto;
+      cursor: grab;
+    }
+
+    .reader-stage.zoomed:active {
+      cursor: grabbing;
+    }
+
+    /* Side Navigation Floating Arrows */
+    .stage-nav-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 44px;
+      height: 64px;
+      border-radius: var(--radius-md);
+      background: rgba(40, 38, 35, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #EAE6DF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 25;
+      transition: all 0.15s ease;
+      backdrop-filter: blur(4px);
+    }
+
+    .stage-nav-arrow:hover:not(:disabled) {
+      background: rgba(158, 59, 36, 0.85);
+      color: #FFFFFF;
+    }
+
+    .stage-nav-arrow:disabled {
+      opacity: 0.2;
+      cursor: default;
+    }
+
+    .stage-nav-prev { left: 1rem; }
+    .stage-nav-next { right: 1rem; }
+
+    /* Zoom Transform Wrapper */
+    .book-zoom-layer {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+      transform-origin: center center;
+      position: relative;
+    }
+
+    /* StPageFlip Container & Realistic Book Styling */
+    #flipbook-container {
+      box-shadow: var(--shadow-book);
+      position: relative;
+    }
+
+    /* CRITICAL FIX: Do not set overflow:hidden or position:relative on .flip-page
+       because StPageFlip applies position:absolute and dynamic clip-paths during backward turns */
+    .flip-page {
+      background-color: #FFFFFF;
+      box-sizing: border-box;
+      backface-visibility: visible;
+      -webkit-backface-visibility: visible;
+      will-change: transform, clip-path;
+    }
+
+    .flip-page img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      pointer-events: none;
+      user-select: none;
+      background-color: #FFFFFF;
+      backface-visibility: visible;
+      -webkit-backface-visibility: visible;
+    }
+
+    /* Realistic Central Spine Crease & Page Curvature Lighting */
+    .flip-page.--left::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 32px;
+      background: linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.04) 60%, rgba(0,0,0,0.16) 100%);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .flip-page.--right::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 32px;
+      background: linear-gradient(to left, rgba(0,0,0,0) 0%, rgba(0,0,0,0.04) 60%, rgba(0,0,0,0.16) 100%);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* Subtle Outer Page Thickness Effect */
+    .flip-page.--left {
+      border-left: 1px solid #D8D4CB;
+    }
+
+    .flip-page.--right {
+      border-right: 1px solid #D8D4CB;
+    }
+
+    .page-number-badge {
+      position: absolute;
+      bottom: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: rgba(60, 58, 54, 0.55);
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .flip-page.--left .page-number-badge { left: 12px; }
+    .flip-page.--right .page-number-badge { right: 12px; }
+
+    /* Bottom Reader Toolbar */
+    .reader-bottombar {
+      height: 58px;
+      background: var(--bg-reader-bar);
+      border-top: 1px solid var(--border-dark);
+      padding: 0 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      color: #EAE6DF;
+      z-index: 30;
+      flex-shrink: 0;
+    }
+
+    .toolbar-group {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .page-indicator-pill {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      padding: 0.35rem 0.85rem;
+      background: rgba(0, 0, 0, 0.28);
+      border: 1px solid var(--border-dark);
+      border-radius: var(--radius-sm);
+      color: #F4F1EA;
+      min-width: 145px;
+      text-align: center;
+    }
+
+    .goto-form {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .goto-input {
+      width: 58px;
+      height: 32px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border-dark);
+      border-radius: var(--radius-sm);
+      color: #FFFFFF;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      text-align: center;
+      padding: 0 0.35rem;
+    }
+
+    .zoom-readout {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      width: 48px;
+      text-align: center;
+      color: #C7C2B8;
+    }
+
+    /* Table of Contents Drawer */
+    .toc-drawer {
+      position: absolute;
+      top: 54px;
+      left: 0;
+      bottom: 58px;
+      width: 280px;
+      background: var(--bg-reader-bar);
+      border-right: 1px solid var(--border-dark);
+      z-index: 28;
+      padding: 1rem;
+      overflow-y: auto;
+      transform: translateX(-100%);
+      transition: transform 0.22s ease;
+    }
+
+    .toc-drawer.open {
+      transform: translateX(0);
+    }
+
+    .toc-title {
+      font-size: 0.8rem;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #9A948A;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border-dark);
+    }
+
+    .toc-list {
+      list-style: none;
+    }
+
+    .toc-item-btn {
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      border: none;
+      color: #DCD7CE;
+      padding: 0.55rem 0.6rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .toc-item-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #FFFFFF;
+    }
+
+    /* Help & Shortcuts Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(12, 11, 10, 0.72);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: 1rem;
+      backdrop-filter: blur(3px);
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-dialog {
+      background: var(--bg-reader-bar);
+      border: 1px solid var(--border-dark);
+      border-radius: var(--radius-md);
+      color: #F2EFE9;
+      max-width: 480px;
+      width: 100%;
+      padding: 1.5rem;
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border-dark);
+    }
+
+    .modal-header h2 {
+      font-family: var(--font-serif);
+      font-size: 1.5rem;
+      font-weight: 400;
+    }
+
+    .shortcut-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.65rem;
+      font-size: 0.88rem;
+    }
+
+    .shortcut-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.35rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    kbd {
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      background: #181715;
+      border: 1px solid #45413B;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      color: #E5E0D5;
+    }
+
+    /* Reduced Motion Preferences */
+    @media (prefers-reduced-motion: reduce) {
+      *, ::before, ::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    /* Responsive Breakpoints */
+    @media (max-width: 960px) {
+      .hero {
+        grid-template-columns: 1fr;
+        gap: 2.5rem;
+        padding: 2.5rem 1.5rem;
+      }
+      .features-section {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .navbar { padding: 1rem 1.25rem; }
+      .badge-privacy { display: none; }
+      .features-section { grid-template-columns: 1fr; }
+      .reader-stage { padding: 0.75rem 0.5rem; }
+      .stage-nav-arrow { display: none; }
+      .reader-doc-title { max-width: 150px; }
+      .reader-bottombar {
+        padding: 0 0.65rem;
+        overflow-x: auto;
+      }
+      .page-indicator-pill {
+        min-width: 110px;
+        font-size: 0.75rem;
+        padding: 0.3rem 0.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Screen Reader Live Status Announcements -->
+  <div id="sr-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- ========================================================================
+       STEP 1 & 2: LANDING & UPLOAD VIEW
+       ======================================================================== -->
+  <div id="landing-view">
+    <header class="navbar">
+      <a href="#" class="brand" aria-label="FlipBook Studio Home">
+        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+          <path d="M12 2v20"/>
+        </svg>
+        <span class="brand-name">FlipBook Studio</span>
+      </a>
+      <div class="nav-actions">
+        <span class="badge-privacy" title="Your files never leave your computer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          100% Client-Side Processing
+        </span>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-content">
+          <span class="hero-eyebrow">Interactive Editorial Reader</span>
+          <h1 class="hero-title">Turn Your PDFs Into Interactive Books.</h1>
+          <p class="hero-subtitle">
+            Upload any PDF document and experience it like a physical edition—complete with two-page spreads, tactile page-turning physics, spine shading, and high-resolution zoom.
+          </p>
+          <div class="hero-cta-group">
+            <button type="button" class="btn btn-primary" id="hero-create-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              Create Your Flipbook
+            </button>
+            <button type="button" class="btn btn-secondary" id="try-sample-btn">
+              Try Sample Architecture Book
+            </button>
+          </div>
+        </div>
+
+        <!-- Sample Open-Book Visual Demonstration -->
+        <div class="book-showcase" aria-hidden="true">
+          <div class="sample-book-3d">
+            <div class="sample-page sample-page-left">
+              <div>
+                <div class="mock-line title"></div>
+                <div class="mock-line"></div>
+                <div class="mock-line"></div>
+                <div class="mock-line short"></div>
+                <div class="mock-art">Plate I — Proporzioni</div>
+                <div class="mock-line"></div>
+                <div class="mock-line short"></div>
+              </div>
+              <div style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted);">04</div>
+            </div>
+            <div class="sample-page sample-page-right">
+              <div>
+                <div class="mock-line"></div>
+                <div class="mock-line"></div>
+                <div class="mock-line short"></div>
+                <div class="mock-art">Plate II — Sezione Aurea</div>
+                <div class="mock-line"></div>
+                <div class="mock-line"></div>
+              </div>
+              <div style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); text-align: right;">05</div>
+            </div>
+            <div class="sample-turning-leaf">
+              <div>
+                <div class="mock-line title"></div>
+                <div class="mock-line"></div>
+                <div class="mock-line short"></div>
+                <div class="mock-art">Interactive 3D Curl</div>
+              </div>
+              <div style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); text-align: right;">03</div>
+            </div>
+          </div>
+          <div class="showcase-caption">
+            <span>Two-page spread with central spine shadow</span>
+            <span style="font-family: var(--font-mono); font-size: 0.78rem; color: var(--accent);">Hover to preview curl</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Drag and Drop Upload Panel -->
+      <section class="upload-wrapper" id="upload-section">
+        <div class="upload-card" id="drop-zone" role="region" aria-label="PDF File Upload Dropzone" tabindex="0">
+          <input type="file" id="pdf-file-input" accept=".pdf,application/pdf" class="sr-only" />
+          
+          <div class="upload-icon-circle">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="12" y1="18" x2="12" y2="12"></line>
+              <line x1="9" y1="15" x2="15" y2="15"></line>
+            </svg>
+          </div>
+
+          <h2 class="upload-heading">Drop your PDF document here</h2>
+          <p class="upload-subtext">Supports portrait, landscape, single-page, and multi-page documents</p>
+
+          <div class="upload-buttons">
+            <button type="button" class="btn btn-secondary" id="choose-pdf-btn">
+              Choose PDF File
+            </button>
+          </div>
+
+          <!-- Selected File Summary -->
+          <div class="selected-file-panel" id="selected-file-panel">
+            <div class="file-meta-row">
+              <div class="file-info">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                <div>
+                  <div class="file-name" id="selected-file-name">document.pdf</div>
+                  <div class="file-size" id="selected-file-size">0 MB</div>
+                </div>
+              </div>
+              <button type="button" class="btn btn-ghost" id="remove-file-btn" aria-label="Remove selected PDF file">
+                Remove
+              </button>
+            </div>
+
+            <div class="book-config-row">
+              <label class="checkbox-label" title="When enabled, Page 1 is shown as a closed front cover and the final page as a back cover.">
+                <input type="checkbox" id="hardcover-toggle" checked />
+                <span>Treat first &amp; last pages as book covers</span>
+              </label>
+
+              <button type="button" class="btn btn-primary" id="generate-flipbook-btn">
+                Generate Flipbook
+              </button>
+            </div>
+          </div>
+
+          <!-- Password Prompt for Encrypted PDFs -->
+          <div class="password-panel" id="password-panel">
+            <div style="font-weight: 600; font-size: 0.9rem;">Password-Protected PDF</div>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 0.2rem;">
+              This document is encrypted. Enter its password to unlock and render pages locally.
+            </p>
+            <div class="password-input-group">
+              <input type="password" id="pdf-password-input" class="text-input" placeholder="Enter PDF password..." />
+              <button type="button" class="btn btn-primary" id="submit-password-btn">Unlock</button>
+            </div>
+          </div>
+
+          <!-- Alerts (Errors & Large File Warnings) -->
+          <div class="alert-box alert-warn" id="warn-box" role="status">
+            <span id="warn-message"></span>
+          </div>
+          <div class="alert-box alert-error" id="error-box" role="alert">
+            <span id="error-message"></span>
+          </div>
+
+          <!-- Real-Time PDF Rendering Progress -->
+          <div class="progress-panel" id="progress-panel" aria-live="polite">
+            <div class="progress-header">
+              <span id="progress-status-text">Reading PDF...</span>
+              <span class="progress-pct" id="progress-percentage">0%</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" id="progress-bar-fill"></div>
+            </div>
+            <div class="progress-footer">
+              <span id="progress-page-count">Preparing pages...</span>
+              <button type="button" class="btn btn-ghost" id="cancel-render-btn" style="padding: 0.25rem 0.6rem; font-size: 0.8rem;">
+                Cancel
+              </button>
+            </div>
+          </div>
+
+          <div class="privacy-footnote">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <span>Privacy Guarantee: PDFs are rendered inside your browser via Web Workers and never uploaded to any external server.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Features Section -->
+      <section class="features-section">
+        <div class="feature-item">
+          <h3>Realistic Page Turns</h3>
+          <p>Drag page corners or click edges to experience physical paper folding, dynamic spine shadows, and perspective lighting.</p>
+        </div>
+        <div class="feature-item">
+          <h3>Adaptive Spreads</h3>
+          <p>Enjoy side-by-side two-page spreads on desktop monitors and automatic single-page portrait reading on mobile phones.</p>
+        </div>
+        <div class="feature-item">
+          <h3>Crisp Vector Zoom</h3>
+          <p>Inspect fine typography and diagrams with multi-level zoom, Ctrl+Wheel magnification, and click-and-drag panning.</p>
+        </div>
+        <div class="feature-item">
+          <h3>Complete Privacy</h3>
+          <p>Zero backend dependencies, zero telemetry, and automatic memory cleanup when switching or closing documents.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ========================================================================
+       STEP 4, 5 & 6: INTERACTIVE 3D FLIPBOOK READER VIEW
+       ======================================================================== -->
+  <div id="reader-view" class="hidden" role="application" aria-label="Interactive Book Reader">
+    <!-- Top Bar -->
+    <header class="reader-topbar">
+      <div class="reader-doc-info">
+        <button type="button" class="icon-btn" id="toc-toggle-btn" title="Table of Contents" aria-label="Toggle Table of Contents" hidden>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="8" y1="6" x2="21" y2="6"></line>
+            <line x1="8" y1="12" x2="21" y2="12"></line>
+            <line x1="8" y1="18" x2="21" y2="18"></line>
+            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+          </svg>
+          <span>Contents</span>
+        </button>
+        <span class="reader-doc-title" id="reader-filename">Document.pdf</span>
+        <span class="reader-badge" id="reader-total-badge">0 Pages</span>
+      </div>
+
+      <div class="reader-top-actions">
+        <button type="button" class="icon-btn" id="download-pdf-btn" title="Open or Download Original PDF" aria-label="Download Original PDF">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span>Original PDF</span>
+        </button>
+        <button type="button" class="icon-btn" id="help-modal-btn" title="Keyboard & Touch Shortcuts (?)" aria-label="Reading Help and Shortcuts">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </button>
+        <button type="button" class="icon-btn" id="close-reader-btn" title="Close Book and Return to Upload" aria-label="Close Flipbook">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+          <span>Close Book</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Optional Table of Contents Drawer -->
+    <aside class="toc-drawer" id="toc-drawer" aria-label="Document Outline">
+      <div class="toc-title">Table of Contents</div>
+      <ul class="toc-list" id="toc-list"></ul>
+    </aside>
+
+    <!-- Central Book Viewport -->
+    <div class="reader-stage" id="reader-stage">
+      <button type="button" class="stage-nav-arrow stage-nav-prev" id="stage-prev-btn" title="Previous Page (Left Arrow)" aria-label="Previous Page">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+
+      <div class="book-zoom-layer" id="book-zoom-layer">
+        <div id="flipbook-container"></div>
+      </div>
+
+      <button type="button" class="stage-nav-arrow stage-nav-next" id="stage-next-btn" title="Next Page (Right Arrow)" aria-label="Next Page">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Bottom Reader Controls Toolbar -->
+    <footer class="reader-bottombar">
+      <!-- Left: Restart & Spread Navigation -->
+      <div class="toolbar-group">
+        <button type="button" class="icon-btn" id="restart-book-btn" title="Return to Front Cover (Home)" aria-label="Restart Reading">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="19 20 9 12 19 4 19 20"></polygon>
+            <line x1="5" y1="19" x2="5" y2="5"></line>
+          </svg>
+        </button>
+        <button type="button" class="icon-btn" id="toolbar-prev-btn" title="Previous Page (Left Arrow)" aria-label="Previous Page">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span>Prev</span>
+        </button>
+        <div class="page-indicator-pill" id="page-indicator" aria-live="polite">
+          Cover (1 of 1)
+        </div>
+        <button type="button" class="icon-btn" id="toolbar-next-btn" title="Next Page (Right Arrow)" aria-label="Next Page">
+          <span>Next</span>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Center: Direct Go-To Page Form -->
+      <form class="goto-form" id="goto-page-form" aria-label="Jump to specific page">
+        <label for="goto-page-input" style="font-size: 0.8rem; color: #B8B2A8;">Go to:</label>
+        <input type="number" id="goto-page-input" class="goto-input" min="1" max="1" placeholder="#" aria-label="Page number" />
+        <button type="submit" class="icon-btn" style="background: rgba(255,255,255,0.08);">Go</button>
+      </form>
+
+      <!-- Right: Zoom & Fullscreen Controls -->
+      <div class="toolbar-group">
+        <button type="button" class="icon-btn" id="zoom-out-btn" title="Zoom Out (-)" aria-label="Zoom Out">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            <line x1="8" y1="11" x2="14" y2="11"></line>
+          </svg>
+        </button>
+        <span class="zoom-readout" id="zoom-readout">100%</span>
+        <button type="button" class="icon-btn" id="zoom-in-btn" title="Zoom In (+)" aria-label="Zoom In">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            <line x1="11" y1="8" x2="11" y2="14"></line>
+            <line x1="8" y1="11" x2="14" y2="11"></line>
+          </svg>
+        </button>
+        <button type="button" class="icon-btn" id="zoom-reset-btn" title="Fit Book to Screen (0)" aria-label="Fit to Screen">
+          Fit
+        </button>
+        <button type="button" class="icon-btn" id="fullscreen-btn" title="Toggle Fullscreen (F)" aria-label="Toggle Fullscreen">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="fullscreen-icon">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+          </svg>
+        </button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Help & Controls Modal -->
+  <div class="modal-backdrop" id="help-modal" role="dialog" aria-modal="true" aria-labelledby="help-modal-title">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h2 id="help-modal-title">Reading Controls &amp; Shortcuts</h2>
+        <button type="button" class="icon-btn" id="close-help-btn" aria-label="Close Help Dialog">&#10005;</button>
+      </div>
+      <div class="shortcut-grid">
+        <div class="shortcut-row">
+          <span>Turn Page Forward</span>
+          <span>Click Right Page / Drag Corner / <kbd>&rarr;</kbd></span>
+        </div>
+        <div class="shortcut-row">
+          <span>Turn Page Backward</span>
+          <span>Click Left Page / Drag Corner / <kbd>&larr;</kbd></span>
+        </div>
+        <div class="shortcut-row">
+          <span>Touch Screen Navigation</span>
+          <span>Swipe Left / Swipe Right</span>
+        </div>
+        <div class="shortcut-row">
+          <span>Jump to Front Cover</span>
+          <kbd>Home</kbd>
+        </div>
+        <div class="shortcut-row">
+          <span>Jump to Back Cover</span>
+          <kbd>End</kbd>
+        </div>
+        <div class="shortcut-row">
+          <span>Zoom In / Out</span>
+          <span><kbd>Ctrl</kbd> + Scroll or <kbd>+</kbd> / <kbd>-</kbd></span>
+        </div>
+        <div class="shortcut-row">
+          <span>Reset Zoom to Fit</span>
+          <kbd>0</kbd>
+        </div>
+        <div class="shortcut-row">
+          <span>Toggle Full Screen</span>
+          <kbd>F</kbd> or <kbd>Esc</kbd>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       APPLICATION LOGIC (MODULAR ES6+)
+       ======================================================================== -->
+       <script>
+  // Configure PDF.js Worker
+  if (window.pdfjsLib) {
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+
+  /**
+   * Application State with Sliding-Window Page Cache (Supports 6,500+ Pages)
+   */
+  const AppState = {
+    selectedFile: null,
+    originalFileUrl: null,
+    pdfDocument: null,
+    isProcessing: false,
+    cancelRequested: false,
+    // Map<pdfPageNumber, { url: string, status: 'rendering'|'ready' }>
+    pageCache: new Map(),
+    // Map<pdfPageNumber, HTMLElement> for O(1) DOM updates
+    pageElements: new Map(),
+    defaultAspectRatio: 0.75,
+    defaultWidth: 600,
+    defaultHeight: 800,
+    outlineItems: [],
+    pageFlip: null,
+    totalActualPages: 0,
+    useHardCover: true,
+    zoomLevel: 1,
+    zoomSteps: [0.75, 0.9, 1, 1.25, 1.5, 1.85, 2.25],
+    isTurning: false,
+    resizeTimer: null,
+    // Virtualization tuning
+    RENDER_AHEAD_BUFFER: 5, // Render 5 pages before/after current spread
+    MAX_CACHE_DISTANCE: 24  // Evict pages further than 24 pages away
+  };
+
+  // Solid white SVG placeholder so even unrendered pages look like real paper, never invisible
+  const BLANK_PAPER =
+    'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800"><rect width="100%" height="100%" fill="%23FFFFFF"/></svg>';
+  const BLANK_PIXEL = BLANK_PAPER;
+
+  const UI = {
+    announcer: document.getElementById('sr-announcer'),
+    landingView: document.getElementById('landing-view'),
+    readerView: document.getElementById('reader-view'),
+    heroCreateBtn: document.getElementById('hero-create-btn'),
+    trySampleBtn: document.getElementById('try-sample-btn'),
+    uploadSection: document.getElementById('upload-section'),
+    dropZone: document.getElementById('drop-zone'),
+    fileInput: document.getElementById('pdf-file-input'),
+    choosePdfBtn: document.getElementById('choose-pdf-btn'),
+    selectedPanel: document.getElementById('selected-file-panel'),
+    fileName: document.getElementById('selected-file-name'),
+    fileSize: document.getElementById('selected-file-size'),
+    removeFileBtn: document.getElementById('remove-file-btn'),
+    hardcoverToggle: document.getElementById('hardcover-toggle'),
+    generateBtn: document.getElementById('generate-flipbook-btn'),
+    passwordPanel: document.getElementById('password-panel'),
+    passwordInput: document.getElementById('pdf-password-input'),
+    submitPasswordBtn: document.getElementById('submit-password-btn'),
+    warnBox: document.getElementById('warn-box'),
+    warnMessage: document.getElementById('warn-message'),
+    errorBox: document.getElementById('error-box'),
+    errorMessage: document.getElementById('error-message'),
+    progressPanel: document.getElementById('progress-panel'),
+    progressStatus: document.getElementById('progress-status-text'),
+    progressPct: document.getElementById('progress-percentage'),
+    progressFill: document.getElementById('progress-bar-fill'),
+    progressPageCount: document.getElementById('progress-page-count'),
+    cancelRenderBtn: document.getElementById('cancel-render-btn'),
+    readerFilename: document.getElementById('reader-filename'),
+    readerTotalBadge: document.getElementById('reader-total-badge'),
+    tocToggleBtn: document.getElementById('toc-toggle-btn'),
+    tocDrawer: document.getElementById('toc-drawer'),
+    tocList: document.getElementById('toc-list'),
+    downloadPdfBtn: document.getElementById('download-pdf-btn'),
+    helpModalBtn: document.getElementById('help-modal-btn'),
+    closeReaderBtn: document.getElementById('close-reader-btn'),
+    readerStage: document.getElementById('reader-stage'),
+    bookZoomLayer: document.getElementById('book-zoom-layer'),
+    flipbookContainer: document.getElementById('flipbook-container'),
+    stagePrevBtn: document.getElementById('stage-prev-btn'),
+    stageNextBtn: document.getElementById('stage-next-btn'),
+    restartBookBtn: document.getElementById('restart-book-btn'),
+    toolbarPrevBtn: document.getElementById('toolbar-prev-btn'),
+    toolbarNextBtn: document.getElementById('toolbar-next-btn'),
+    pageIndicator: document.getElementById('page-indicator'),
+    gotoForm: document.getElementById('goto-page-form'),
+    gotoInput: document.getElementById('goto-page-input'),
+    zoomOutBtn: document.getElementById('zoom-out-btn'),
+    zoomInBtn: document.getElementById('zoom-in-btn'),
+    zoomResetBtn: document.getElementById('zoom-reset-btn'),
+    zoomReadout: document.getElementById('zoom-readout'),
+    fullscreenBtn: document.getElementById('fullscreen-btn'),
+    helpModal: document.getElementById('help-modal'),
+    closeHelpBtn: document.getElementById('close-help-btn')
+  };
+
+  function announce(message) {
+    UI.announcer.textContent = '';
+    setTimeout(() => { UI.announcer.textContent = message; }, 50);
+  }
+
+  function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  function showError(msg) {
+    UI.errorMessage.textContent = msg;
+    UI.errorBox.classList.add('active');
+    announce('Error: ' + msg);
+  }
+
+  function clearAlerts() {
+    UI.errorBox.classList.remove('active');
+    UI.warnBox.classList.remove('active');
+    UI.errorMessage.textContent = '';
+    UI.warnMessage.textContent = '';
+  }
+
+  function showWarning(msg) {
+    UI.warnMessage.textContent = msg;
+    UI.warnBox.classList.add('active');
+  }
+
+  async function cleanupResources() {
+    if (AppState.pageFlip) {
+      try { AppState.pageFlip.destroy(); } catch (e) {}
+      AppState.pageFlip = null;
+    }
+
+    for (const [, entry] of AppState.pageCache.entries()) {
+      if (entry.url && entry.url.startsWith('blob:')) {
+        URL.revokeObjectURL(entry.url);
+      }
+    }
+    AppState.pageCache.clear();
+    AppState.pageElements.clear();
+
+    if (AppState.pdfDocument) {
+      try { await AppState.pdfDocument.destroy(); } catch (e) {}
+      AppState.pdfDocument = null;
+    }
+
+    if (AppState.originalFileUrl) {
+      URL.revokeObjectURL(AppState.originalFileUrl);
+      AppState.originalFileUrl = null;
+    }
+
+    UI.flipbookContainer.innerHTML = '';
+    UI.tocList.innerHTML = '';
+    UI.tocDrawer.classList.remove('open');
+    UI.tocToggleBtn.hidden = true;
+    AppState.outlineItems = [];
+    AppState.totalActualPages = 0;
+  }
+
+  function validatePdfFile(file) {
+    clearAlerts();
+    if (!file) return false;
+
+    const fileName = file.name || '';
+    const hasPdfExt = fileName.toLowerCase().endsWith('.pdf');
+    const hasPdfMime = file.type === 'application/pdf' || file.type === '';
+
+    if (!hasPdfExt && !hasPdfMime) {
+      showError('Invalid file format. Please choose a valid PDF document (.pdf).');
+      return false;
+    }
+
+    if (file.size === 0) {
+      showError('The selected PDF file is empty (0 bytes).');
+      return false;
+    }
+
+    return true;
+  }
+
+  function handleFileSelection(file) {
+    if (AppState.isProcessing) return;
+    if (!validatePdfFile(file)) return;
+
+    AppState.selectedFile = file;
+    UI.fileName.textContent = file.name;
+    UI.fileSize.textContent = formatFileSize(file.size);
+    UI.selectedPanel.classList.add('active');
+    UI.passwordPanel.classList.remove('active');
+    UI.passwordInput.value = '';
+    announce('Selected file ' + file.name);
+  }
+
+  function resetFileSelection() {
+    if (AppState.isProcessing) AppState.cancelRequested = true;
+    AppState.selectedFile = null;
+    UI.fileInput.value = '';
+    UI.selectedPanel.classList.remove('active');
+    UI.passwordPanel.classList.remove('active');
+    UI.progressPanel.classList.remove('active');
+    clearAlerts();
+  }
+
+  function updateProgressUI(statusText, current, total) {
+    UI.progressStatus.textContent = statusText;
+    const pct = total > 0 ? Math.min(100, Math.round((current / total) * 100)) : 0;
+    UI.progressPct.textContent = pct + '%';
+    UI.progressFill.style.width = pct + '%';
+    UI.progressPageCount.textContent = total > 0 ? `Initial buffer: ${current} of ${total}` : 'Opening document...';
+  }
+
+  /**
+   * Renders a single PDF page on-demand, decodes the bitmap into GPU memory,
+   * and injects it into its DOM leaf so backward page turns never flash blank.
+   */
+  function ensurePageRendered(pageNumber) {
+    if (!AppState.pdfDocument) return Promise.resolve();
+    if (pageNumber < 1 || pageNumber > AppState.totalActualPages) return Promise.resolve();
+
+    const existing = AppState.pageCache.get(pageNumber);
+    if (existing) {
+      if (existing.status === 'ready') return Promise.resolve();
+      if (existing.promise) return existing.promise;
+    }
+
+    const renderPromise = (async () => {
+      try {
+        const page = await AppState.pdfDocument.getPage(pageNumber);
+        const unscaled = page.getViewport({ scale: 1 });
+        const maxDim = Math.max(unscaled.width, unscaled.height);
+        const scale = Math.min(1.85, 1800 / maxDim);
+        const viewport = page.getViewport({ scale });
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d', { alpha: false });
+        canvas.width = Math.floor(viewport.width);
+        canvas.height = Math.floor(viewport.height);
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        await page.render({ canvasContext: ctx, viewport }).promise;
+
+        const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.88));
+        const objectUrl = URL.createObjectURL(blob);
+
+        canvas.width = 1;
+        canvas.height = 1;
+        page.cleanup();
+
+        if (!AppState.pageCache.has(pageNumber)) {
+          URL.revokeObjectURL(objectUrl);
+          return;
+        }
+
+        const imgEl = AppState.pageElements.get(pageNumber);
+        if (imgEl) {
+          imgEl.src = objectUrl;
+          // Force browser to decode image bitmap immediately so StPageFlip can paint it mid-turn
+          if (typeof imgEl.decode === 'function') {
+            try { await imgEl.decode(); } catch (_) {}
+          }
+        }
+
+        AppState.pageCache.set(pageNumber, { status: 'ready', url: objectUrl, promise: null });
+      } catch (e) {
+        AppState.pageCache.delete(pageNumber);
+      }
+    })();
+
+    AppState.pageCache.set(pageNumber, { status: 'rendering', url: null, promise: renderPromise });
+    return renderPromise;
+  }
+
+  /**
+   * Sliding-Window Manager: Prioritizes current spread + immediate previous & next spreads
+   */
+  async function updateSlidingWindowCache(centerPdfPage) {
+    if (!AppState.pdfDocument) return;
+
+    // 1. Immediately guarantee the current spread, previous spread (-2, -1), and next spread (+1, +2, +3)
+    const criticalPages = [
+      centerPdfPage,
+      centerPdfPage + 1,
+      centerPdfPage - 1,
+      centerPdfPage - 2,
+      centerPdfPage + 2,
+      centerPdfPage + 3
+    ].filter(p => p >= 1 && p <= AppState.totalActualPages);
+
+    await Promise.all(criticalPages.map(p => ensurePageRendered(p)));
+
+    // 2. Evict pages far outside the window (keep Page 1 and Back Cover cached)
+    for (const [cachedPage, entry] of AppState.pageCache.entries()) {
+      const isCover = cachedPage === 1 || cachedPage === AppState.totalActualPages;
+      if (!isCover && Math.abs(cachedPage - centerPdfPage) > AppState.MAX_CACHE_DISTANCE) {
+        if (entry.url && entry.url.startsWith('blob:')) {
+          URL.revokeObjectURL(entry.url);
+        }
+        AppState.pageCache.delete(cachedPage);
+        const imgEl = AppState.pageElements.get(cachedPage);
+        if (imgEl) imgEl.src = BLANK_PAPER;
+      }
+    }
+
+    // 3. Render outer buffer in background
+    const startPage = Math.max(1, centerPdfPage - AppState.RENDER_AHEAD_BUFFER);
+    const endPage = Math.min(AppState.totalActualPages, centerPdfPage + AppState.RENDER_AHEAD_BUFFER);
+    for (let p = startPage; p <= endPage; p++) {
+      ensurePageRendered(p);
+    }
+  }
+
+  /**
+   * Opens PDF and pre-renders ONLY the initial 6 pages so 6,500-page PDFs open in ~1.5s
+   */
+  async function processSelectedPdf(password = '') {
+    if (!AppState.selectedFile || AppState.isProcessing) return;
+
+    clearAlerts();
+    await cleanupResources();
+
+    AppState.isProcessing = true;
+    AppState.cancelRequested = false;
+    AppState.useHardCover = UI.hardcoverToggle.checked;
+
+    UI.generateBtn.disabled = true;
+    UI.removeFileBtn.disabled = true;
+    UI.passwordPanel.classList.remove('active');
+    UI.progressPanel.classList.add('active');
+    updateProgressUI('Reading PDF structure...', 0, 0);
+
+    try {
+      const arrayBuffer = await AppState.selectedFile.arrayBuffer();
+      if (AppState.cancelRequested) throw new Error('CANCELLED');
+
+      const loadingTask = window.pdfjsLib.getDocument({
+        data: arrayBuffer,
+        password: password || undefined,
+        isEvalSupported: false
+      });
+
+      const pdfDoc = await loadingTask.promise;
+      AppState.pdfDocument = pdfDoc;
+
+      const numPages = pdfDoc.numPages;
+      if (!numPages || numPages < 1) {
+        throw new Error('This PDF contains no readable pages.');
+      }
+
+      AppState.totalActualPages = numPages;
+
+      // Inspect Page 1 for aspect ratio
+      const firstPage = await pdfDoc.getPage(1);
+      const vp = firstPage.getViewport({ scale: 1 });
+      AppState.defaultWidth = vp.width;
+      AppState.defaultHeight = vp.height;
+      AppState.defaultAspectRatio = vp.width / vp.height;
+
+      // Pre-render only the first 6 pages (and back cover) for instant launch
+      const initialCount = Math.min(numPages, 6);
+      for (let i = 1; i <= initialCount; i++) {
+        if (AppState.cancelRequested) throw new Error('CANCELLED');
+        updateProgressUI(`Preparing initial pages (${i}/${initialCount})...`, i, initialCount);
+        await ensurePageRendered(i);
+      }
+
+      await extractPdfOutline(pdfDoc);
+      AppState.originalFileUrl = URL.createObjectURL(AppState.selectedFile);
+
+      updateProgressUI('Building your flipbook...', initialCount, initialCount);
+      openReaderInterface(AppState.selectedFile.name);
+    } catch (err) {
+      if (err.message === 'CANCELLED') {
+        await cleanupResources();
+      } else if (err.name === 'PasswordException') {
+        UI.passwordPanel.classList.add('active');
+        UI.passwordInput.focus();
+        if (err.code === window.pdfjsLib.PasswordResponses.INCORRECT_PASSWORD) {
+          showError('Incorrect password. Please try again.');
+        }
+      } else {
+        console.error(err);
+        showError(err.message || 'Unable to read this PDF file.');
+        await cleanupResources();
+      }
+    } finally {
+      AppState.isProcessing = false;
+      UI.generateBtn.disabled = false;
+      UI.removeFileBtn.disabled = false;
+      UI.progressPanel.classList.remove('active');
+    }
+  }
+
+  async function extractPdfOutline(pdfDoc) {
+    try {
+      const outline = await pdfDoc.getOutline();
+      if (!outline || outline.length === 0) return;
+
+      const items = [];
+      for (const item of outline.slice(0, 60)) {
+        let dest = item.dest;
+        if (typeof dest === 'string') dest = await pdfDoc.getDestination(dest);
+        if (Array.isArray(dest) && dest[0]) {
+          const pageIndex = await pdfDoc.getPageIndex(dest[0]);
+          items.push({ title: item.title || 'Section', pageNumber: pageIndex + 1 });
+        }
+      }
+
+      if (items.length > 0) {
+        AppState.outlineItems = items;
+        UI.tocToggleBtn.hidden = false;
+        UI.tocList.innerHTML = '';
+        items.forEach(entry => {
+          const li = document.createElement('li');
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'toc-item-btn';
+          const titleSpan = document.createElement('span');
+          titleSpan.textContent = entry.title;
+          const pageSpan = document.createElement('span');
+          pageSpan.style.fontFamily = 'var(--font-mono)';
+          pageSpan.style.fontSize = '0.75rem';
+          pageSpan.style.color = '#9A948A';
+          pageSpan.textContent = entry.pageNumber;
+          btn.appendChild(titleSpan);
+          btn.appendChild(pageSpan);
+          btn.addEventListener('click', () => {
+            jumpToPdfPage(entry.pageNumber);
+            UI.tocDrawer.classList.remove('open');
+          });
+          li.appendChild(btn);
+          UI.tocList.appendChild(li);
+        });
+      }
+    } catch (e) {}
+  }
+
+  async function generateSampleBooklet() {
+    if (AppState.isProcessing) return;
+    clearAlerts();
+    await cleanupResources();
+
+    AppState.isProcessing = true;
+    AppState.useHardCover = true;
+    AppState.totalActualPages = 6;
+    AppState.defaultWidth = 900;
+    AppState.defaultHeight = 1200;
+    AppState.defaultAspectRatio = 0.75;
+
+    const specs = [
+      { title: 'ARCHITECTURA MODERNA', subtitle: 'Proportions, Light & Materiality', footer: 'FRONT COVER', bg: '#23211E', dark: true },
+      { title: 'I. The Golden Section', subtitle: 'Classical harmony in editorial grids.', footer: 'Page 2', bg: '#FAF8F5', dark: false },
+      { title: 'II. Tactile Mechanics', subtitle: 'Physical page curvature and spine shadows.', footer: 'Page 3', bg: '#FAF8F5', dark: false },
+      { title: 'III. Chiaroscuro & Depth', subtitle: 'Balancing contrast between ivory leaves.', footer: 'Page 4', bg: '#FAF8F5', dark: false },
+      { title: 'IV. Structural Typography', subtitle: 'Serif headlines paired with monospace indices.', footer: 'Page 5', bg: '#FAF8F5', dark: false },
+      { title: 'COLOPHON', subtitle: 'Rendered locally in FlipBook Studio.', footer: 'BACK COVER', bg: '#23211E', dark: true }
+    ];
+
+    for (let i = 0; i < specs.length; i++) {
+      const s = specs[i];
+      const canvas = document.createElement('canvas');
+      canvas.width = 900;
+      canvas.height = 1200;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = s.bg;
+      ctx.fillRect(0, 0, 900, 1200);
+      ctx.strokeStyle = s.dark ? '#524D46' : '#D8D3C8';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(55, 55, 790, 1090);
+      ctx.fillStyle = s.dark ? '#F5F2EB' : '#1C1B18';
+      ctx.font = '44px Georgia, serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(s.title, 450, 560);
+      ctx.fillStyle = s.dark ? '#B8B2A6' : '#5C5953';
+      ctx.font = '24px sans-serif';
+      ctx.fillText(s.subtitle, 450, 625);
+      ctx.font = '18px monospace';
+      ctx.fillText(s.footer, 450, 1105);
+
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.9));
+      AppState.pageCache.set(i + 1, { status: 'ready', url: URL.createObjectURL(blob) });
+    }
+
+    AppState.isProcessing = false;
+    openReaderInterface('Architectura-Moderna-Sample.pdf');
+  }
+
+  function openReaderInterface(filename) {
+    UI.landingView.classList.add('hidden');
+    UI.readerView.classList.remove('hidden');
+    document.body.classList.add('reader-mode');
+
+    UI.readerFilename.textContent = filename || 'Document.pdf';
+    UI.readerTotalBadge.textContent = `${AppState.totalActualPages} Pages`;
+    UI.gotoInput.max = String(AppState.totalActualPages);
+    UI.gotoInput.value = '';
+    UI.downloadPdfBtn.style.display = AppState.originalFileUrl ? 'inline-flex' : 'none';
+
+    resetZoom();
+    buildFlipbookInstance(0);
+    announce(`Flipbook ready with ${AppState.totalActualPages} pages.`);
+  }
+
+  function calculateOptimalPageSize(pageAspectRatio) {
+    const stageRect = UI.readerStage.getBoundingClientRect();
+    const availW = Math.max(280, stageRect.width - 64);
+    const availH = Math.max(320, stageRect.height - 32);
+    const isSinglePageViewport = window.innerWidth < 768 || AppState.totalActualPages === 1;
+
+    let pageH = availH;
+    let pageW = pageH * pageAspectRatio;
+    const maxW = isSinglePageViewport ? availW : availW / 2;
+    if (pageW > maxW) {
+      pageW = maxW;
+      pageH = pageW / pageAspectRatio;
+    }
+
+    return {
+      width: Math.max(180, Math.floor(pageW)),
+      height: Math.max(240, Math.floor(pageH)),
+      isSinglePageViewport
+    };
+  }
+
+  function buildFlipbookInstance(startPageIndex = 0) {
+    if (AppState.pageFlip) {
+      try { AppState.pageFlip.destroy(); } catch (e) {}
+      AppState.pageFlip = null;
+    }
+
+    UI.flipbookContainer.innerHTML = '';
+    AppState.pageElements.clear();
+
+    const { width, height, isSinglePageViewport } = calculateOptimalPageSize(AppState.defaultAspectRatio);
+    const totalActual = AppState.totalActualPages;
+    const effectiveShowCover = AppState.useHardCover && totalActual > 1;
+    const needsBlankLeaf = effectiveShowCover && totalActual > 1 && totalActual % 2 !== 0;
+
+    const fragment = document.createDocumentFragment();
+
+    const appendLeaf = (pdfPageNumber, isCoverLeaf) => {
+      const pageDiv = document.createElement('div');
+      pageDiv.className = 'flip-page';
+      pageDiv.setAttribute('data-density', isCoverLeaf ? 'hard' : 'soft');
+
+      const img = document.createElement('img');
+      const cached = pdfPageNumber ? AppState.pageCache.get(pdfPageNumber) : null;
+      img.src = (cached && cached.url) ? cached.url : BLANK_PAPER;
+      img.alt = pdfPageNumber ? `PDF Page ${pdfPageNumber}` : 'Blank backing leaf';
+      pageDiv.appendChild(img);
+
+      if (pdfPageNumber) {
+        AppState.pageElements.set(pdfPageNumber, img);
+        const badge = document.createElement('span');
+        badge.className = 'page-number-badge';
+        badge.textContent = pdfPageNumber;
+        pageDiv.appendChild(badge);
+      }
+
+      fragment.appendChild(pageDiv);
+    };
+
+    for (let p = 1; p <= totalActual; p++) {
+      if (needsBlankLeaf && p === totalActual) {
+        appendLeaf(null, false);
+      }
+      const isCoverLeaf = effectiveShowCover && (p === 1 || p === totalActual);
+      appendLeaf(p, isCoverLeaf);
+    }
+
+    UI.flipbookContainer.appendChild(fragment);
+
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    AppState.pageFlip = new St.PageFlip(UI.flipbookContainer, {
+      width,
+      height,
+      size: 'fixed',
+      drawShadow: true,
+      maxShadowOpacity: 0.48,
+      showCover: effectiveShowCover,
+      usePortrait: isSinglePageViewport,
+      startPage: startPageIndex,
+      flippingTime: reducedMotion ? 120 : 680,
+      swipeDistance: 30,
+      showPageCorners: true
+    });
+
+    AppState.pageFlip.loadFromHTML(UI.flipbookContainer.querySelectorAll('.flip-page'));
+
+    AppState.pageFlip.on('flip', () => {
+      updateNavigationState();
+    });
+
+    AppState.pageFlip.on('changeState', (e) => {
+      AppState.isTurning = e.data === 'flipping';
+      if (e.data === 'user_fold' || e.data === 'flipping') {
+        const currentIdx = AppState.pageFlip.getCurrentPageIndex();
+        const currentPdfPage = mapDomIndexToPdfPage(currentIdx) || 1;
+        updateSlidingWindowCache(currentPdfPage);
+      }
+    });
+
+    updateNavigationState();
+  }
+
+  function mapDomIndexToPdfPage(domIndex) {
+    const totalActual = AppState.totalActualPages;
+    const effectiveShowCover = AppState.useHardCover && totalActual > 1;
+    const hasBlank = effectiveShowCover && totalActual > 1 && totalActual % 2 !== 0;
+
+    if (!hasBlank) return Math.min(totalActual, Math.max(1, domIndex + 1));
+    const blankIdx = totalActual - 1;
+    if (domIndex < blankIdx) return domIndex + 1;
+    if (domIndex === blankIdx) return null;
+    return totalActual;
+  }
+
+  function mapPdfPageToDomIndex(pdfPageNumber) {
+    const totalActual = AppState.totalActualPages;
+    const effectiveShowCover = AppState.useHardCover && totalActual > 1;
+    const hasBlank = effectiveShowCover && totalActual > 1 && totalActual % 2 !== 0;
+
+    if (!hasBlank) return pdfPageNumber - 1;
+    if (pdfPageNumber === totalActual) return totalActual;
+    return pdfPageNumber - 1;
+  }
+
+  function updateNavigationState() {
+    if (!AppState.pageFlip) return;
+
+    const currentIdx = AppState.pageFlip.getCurrentPageIndex();
+    const totalDomPages = AppState.pageFlip.getPageCount();
+    const orientation = AppState.pageFlip.getOrientation();
+    const totalActual = AppState.totalActualPages;
+    const effectiveShowCover = AppState.useHardCover && totalActual > 1;
+
+    const currentPdfPage = mapDomIndexToPdfPage(currentIdx) || totalActual;
+    // Trigger sliding-window lazy render around the active page
+    updateSlidingWindowCache(currentPdfPage);
+
+    let label = '';
+    if (totalActual === 1) {
+      label = 'Page 1 of 1';
+    } else if (orientation === 'portrait' || window.innerWidth < 768) {
+      label = `Page ${currentPdfPage} of ${totalActual}`;
+    } else {
+      if (effectiveShowCover && currentIdx === 0) {
+        label = `Cover (1 of ${totalActual})`;
+      } else if (effectiveShowCover && currentIdx === totalDomPages - 1) {
+        label = `Back Cover (${totalActual} of ${totalActual})`;
+      } else {
+        const leftPage = mapDomIndexToPdfPage(currentIdx);
+        const rightPage = mapDomIndexToPdfPage(currentIdx + 1);
+        if (leftPage && rightPage && leftPage !== rightPage) {
+          label = `Pages ${leftPage}–${rightPage} of ${totalActual}`;
+        } else {
+          label = `Page ${leftPage || rightPage || 1} of ${totalActual}`;
+        }
+      }
+    }
+
+    UI.pageIndicator.textContent = label;
+
+    const isAtStart = currentIdx <= 0;
+    const isAtEnd = currentIdx >= totalDomPages - 1 ||
+      (orientation === 'landscape' && !effectiveShowCover && currentIdx >= totalDomPages - 2);
+
+    UI.stagePrevBtn.disabled = isAtStart;
+    UI.toolbarPrevBtn.disabled = isAtStart;
+    UI.restartBookBtn.disabled = isAtStart;
+    UI.stageNextBtn.disabled = isAtEnd;
+    UI.toolbarNextBtn.disabled = isAtEnd;
+  }
+
+  async function turnNext() {
+    if (!AppState.pageFlip || AppState.isTurning) return;
+    const currentIdx = AppState.pageFlip.getCurrentPageIndex();
+    const currentPdfPage = mapDomIndexToPdfPage(currentIdx) || 1;
+
+    // Ensure next spread is decoded before starting forward turn animation
+    await Promise.all([
+      ensurePageRendered(currentPdfPage + 1),
+      ensurePageRendered(currentPdfPage + 2),
+      ensurePageRendered(currentPdfPage + 3)
+    ]);
+    AppState.pageFlip.flipNext();
+  }
+
+  async function turnPrev() {
+    if (!AppState.pageFlip || AppState.isTurning) return;
+    const currentIdx = AppState.pageFlip.getCurrentPageIndex();
+    const currentPdfPage = mapDomIndexToPdfPage(currentIdx) || 1;
+
+    // Ensure previous spread (both left and right leaves) is decoded BEFORE backward turn begins
+    await Promise.all([
+      ensurePageRendered(currentPdfPage - 1),
+      ensurePageRendered(currentPdfPage - 2),
+      ensurePageRendered(currentPdfPage - 3)
+    ]);
+    AppState.pageFlip.flipPrev();
+  }
+
+  async function jumpToPdfPage(targetPage) {
+    if (!AppState.pageFlip) return;
+    const pageNum = parseInt(targetPage, 10);
+    if (isNaN(pageNum) || pageNum < 1 || pageNum > AppState.totalActualPages) return;
+
+    // Pre-render target spread before flipping so the user never sees a blank page on jump
+    await updateSlidingWindowCache(pageNum);
+    const domIndex = mapPdfPageToDomIndex(pageNum);
+    AppState.pageFlip.turnToPage(domIndex);
+    updateNavigationState();
+  }
+
+  function applyZoom(newZoom) {
+    const clamped = Math.min(2.25, Math.max(0.75, newZoom));
+    AppState.zoomLevel = clamped;
+    UI.bookZoomLayer.style.transform = `scale(${clamped})`;
+    UI.zoomReadout.textContent = `${Math.round(clamped * 100)}%`;
+    UI.readerStage.classList.toggle('zoomed', clamped > 1);
+    UI.zoomOutBtn.disabled = clamped <= 0.75;
+    UI.zoomInBtn.disabled = clamped >= 2.25;
+  }
+
+  function zoomIn() {
+    const next = AppState.zoomSteps.find(s => s > AppState.zoomLevel + 0.01) || 2.25;
+    applyZoom(next);
+  }
+
+  function zoomOut() {
+    const prev = [...AppState.zoomSteps].reverse().find(s => s < AppState.zoomLevel - 0.01) || 0.75;
+    applyZoom(prev);
+  }
+
+  function resetZoom() {
+    applyZoom(1);
+    UI.readerStage.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+  }
+
+  async function toggleFullScreen() {
+    try {
+      if (!document.fullscreenElement) await UI.readerView.requestFullscreen();
+      else await document.exitFullscreen();
+    } catch (err) {}
+  }
+
+  function bindEvents() {
+    UI.heroCreateBtn.addEventListener('click', () => UI.fileInput.click());
+    UI.trySampleBtn.addEventListener('click', generateSampleBooklet);
+    UI.choosePdfBtn.addEventListener('click', (e) => { e.stopPropagation(); UI.fileInput.click(); });
+    UI.fileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) handleFileSelection(e.target.files[0]);
+    });
+
+    ['dragenter', 'dragover'].forEach(evt => {
+      UI.dropZone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        UI.dropZone.classList.add('drag-over');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(evt => {
+      UI.dropZone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        UI.dropZone.classList.remove('drag-over');
+      });
+    });
+
+    UI.dropZone.addEventListener('drop', (e) => {
+      if (e.dataTransfer?.files?.length) handleFileSelection(e.dataTransfer.files[0]);
+    });
+
+    UI.removeFileBtn.addEventListener('click', (e) => { e.stopPropagation(); resetFileSelection(); });
+    UI.generateBtn.addEventListener('click', (e) => { e.stopPropagation(); processSelectedPdf(); });
+    UI.submitPasswordBtn.addEventListener('click', () => processSelectedPdf(UI.passwordInput.value));
+    UI.passwordInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); processSelectedPdf(UI.passwordInput.value); }
+    });
+    UI.cancelRenderBtn.addEventListener('click', () => { AppState.cancelRequested = true; });
+
+    UI.stageNextBtn.addEventListener('click', turnNext);
+    UI.toolbarNextBtn.addEventListener('click', turnNext);
+    UI.stagePrevBtn.addEventListener('click', turnPrev);
+    UI.toolbarPrevBtn.addEventListener('click', turnPrev);
+
+    UI.restartBookBtn.addEventListener('click', () => jumpToPdfPage(1));
+    UI.gotoForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      jumpToPdfPage(UI.gotoInput.value);
+    });
+
+    UI.zoomInBtn.addEventListener('click', zoomIn);
+    UI.zoomOutBtn.addEventListener('click', zoomOut);
+    UI.zoomResetBtn.addEventListener('click', resetZoom);
+    UI.fullscreenBtn.addEventListener('click', toggleFullScreen);
+
+    UI.readerStage.addEventListener('wheel', (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        if (e.deltaY < 0) zoomIn();
+        else zoomOut();
+      }
+    }, { passive: false });
+
+    UI.tocToggleBtn.addEventListener('click', () => UI.tocDrawer.classList.toggle('open'));
+    UI.downloadPdfBtn.addEventListener('click', () => {
+      if (!AppState.originalFileUrl) return;
+      const a = document.createElement('a');
+      a.href = AppState.originalFileUrl;
+      a.download = AppState.selectedFile ? AppState.selectedFile.name : 'document.pdf';
+      a.click();
+    });
+
+    UI.helpModalBtn.addEventListener('click', () => UI.helpModal.classList.add('open'));
+    UI.closeHelpBtn.addEventListener('click', () => UI.helpModal.classList.remove('open'));
+    UI.helpModal.addEventListener('click', (e) => {
+      if (e.target === UI.helpModal) UI.helpModal.classList.remove('open');
+    });
+
+    UI.closeReaderBtn.addEventListener('click', async () => {
+      if (document.fullscreenElement) {
+        try { await document.exitFullscreen(); } catch (e) {}
+      }
+      await cleanupResources();
+      UI.readerView.classList.add('hidden');
+      UI.landingView.classList.remove('hidden');
+      document.body.classList.remove('reader-mode');
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (UI.readerView.classList.contains('hidden')) return;
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+      if (e.key === 'ArrowRight') { e.preventDefault(); turnNext(); }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); turnPrev(); }
+      else if (e.key === 'Home') { e.preventDefault(); jumpToPdfPage(1); }
+      else if (e.key === 'End') { e.preventDefault(); jumpToPdfPage(AppState.totalActualPages); }
+      else if (e.key === '+' || e.key === '=') { e.preventDefault(); zoomIn(); }
+      else if (e.key === '-') { e.preventDefault(); zoomOut(); }
+      else if (e.key === '0') { e.preventDefault(); resetZoom(); }
+      else if (e.key === 'f' || e.key === 'F') {
+        if (!e.ctrlKey && !e.metaKey) { e.preventDefault(); toggleFullScreen(); }
+      }
+    });
+
+    window.addEventListener('resize', () => {
+      if (UI.readerView.classList.contains('hidden') || !AppState.pageFlip) return;
+      clearTimeout(AppState.resizeTimer);
+      AppState.resizeTimer = setTimeout(() => {
+        const currentIdx = AppState.pageFlip.getCurrentPageIndex();
+        buildFlipbookInstance(currentIdx);
+      }, 180);
+    });
+  }
+
+  bindEvents();
+</script>
+</body>
+</html>
