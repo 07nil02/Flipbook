@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-  <title>FlipBook Studio — Interactive PDF-to-3D Flipbook Reader</title>
+  <title>FlipBook — Interactive PDF-to-3D Flipbook Reader</title>
   
-  <!-- Google Fonts: Editorial Serif & Clean Sans -->
+  <!-- Google Fonts: Pixel Display (Silkscreen), Editorial Sans (Inter), Technical Monospace (Space Mono) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Silkscreen:wght@400;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 
   <!-- PDF.js (Stable v3.11.174) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -17,31 +17,43 @@
 
   <style>
     :root {
-      --bg-warm: #F6F4EF;
-      --bg-surface: #EFECE6;
-      --bg-elevated: #FFFFFF;
-      --bg-reader: #1E1D1B;
-      --bg-reader-bar: #282623;
-      --text-primary: #1C1B18;
-      --text-secondary: #5C5953;
-      --text-muted: #8A857D;
-      --accent: #9E3B24;
-      --accent-hover: #7F2E1B;
-      --accent-subtle: rgba(158, 59, 36, 0.08);
-      --border-light: #DFDBD2;
-      --border-dark: #383530;
-      --error-bg: #FDF2F0;
-      --error-text: #A82515;
-      --warn-bg: #FEF9EC;
-      --warn-text: #92600A;
-      --radius-sm: 6px;
-      --radius-md: 10px;
-      --radius-lg: 14px;
-      --shadow-soft: 0 12px 32px -8px rgba(28, 27, 24, 0.08), 0 4px 12px -2px rgba(28, 27, 24, 0.04);
-      --shadow-book: 0 28px 60px rgba(0, 0, 0, 0.55), 0 8px 24px rgba(0, 0, 0, 0.35);
-      --font-serif: 'Instrument Serif', Georgia, serif;
-      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
+      --bg-base: #0B0F0C;
+      --bg-surface: #121A14;
+      --bg-elevated: #18221A;
+      --bg-elevated-hover: #202D23;
+      --border-subtle: #2B3A2E;
+      --border-hover: #3E5442;
+      --border-accent: #668B6B;
+      
+      --accent: #668B6B;
+      --accent-hover: #79A07E;
+      --accent-active: #91B295;
+      --accent-subtle: rgba(102, 139, 107, 0.12);
+      --accent-glow: rgba(145, 178, 149, 0.2);
+      
+      --text-primary: #E0E6DC;
+      --text-secondary: #AAB5AB;
+      --text-muted: #829184;
+      
+      --error-bg: rgba(217, 107, 107, 0.12);
+      --error-border: #5C2828;
+      --error-text: #E58A8A;
+      
+      --warn-bg: rgba(212, 163, 89, 0.12);
+      --warn-border: #543F1E;
+      --warn-text: #DFC183;
+      
+      --radius-xs: 3px;
+      --radius-sm: 4px;
+      --radius-md: 6px;
+      --radius-lg: 8px;
+      
+      --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.45);
+      --shadow-book: 0 28px 65px rgba(0, 0, 0, 0.85), 0 8px 24px rgba(0, 0, 0, 0.55);
+      
+      --font-pixel: 'Silkscreen', monospace;
+      --font-mono: 'Space Mono', 'JetBrains Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
 
     * {
@@ -52,22 +64,25 @@
 
     html, body {
       height: 100%;
-      background-color: var(--bg-warm);
+      background-color: var(--bg-base);
       color: var(--text-primary);
       font-family: var(--font-sans);
       -webkit-font-smoothing: antialiased;
       overflow-x: hidden;
+      background-image: radial-gradient(rgba(43, 58, 46, 0.35) 1px, transparent 1px);
+      background-size: 24px 24px;
     }
 
     body.reader-mode {
       overflow: hidden;
-      background-color: var(--bg-reader);
+      background-color: var(--bg-base);
       user-select: none;
+      background-image: none;
     }
 
     /* Accessibility Focus */
     :focus-visible {
-      outline: 2px solid var(--accent);
+      outline: 2px solid var(--accent-active);
       outline-offset: 2px;
     }
 
@@ -81,6 +96,86 @@
       clip: rect(0, 0, 0, 0);
       white-space: nowrap;
       border: 0;
+    }
+
+    /* Custom Sleek Dark Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-base);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-subtle);
+      border-radius: var(--radius-xs);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--border-hover);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.55rem;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      padding: 0.65rem 1.35rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      text-decoration: none;
+      user-select: none;
+    }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background-color: var(--accent);
+      color: #0B0F0C;
+      font-weight: 700;
+      border-color: var(--accent);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background-color: var(--accent-active);
+      border-color: var(--accent-active);
+      box-shadow: 0 4px 14px var(--accent-glow);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background-color: var(--bg-surface);
+      color: var(--text-primary);
+      border-color: var(--border-subtle);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background-color: var(--bg-elevated);
+      border-color: var(--border-hover);
+      color: var(--accent-active);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid transparent;
+      padding: 0.45rem 0.8rem;
+      font-size: 0.8rem;
+    }
+
+    .btn-ghost:hover:not(:disabled) {
+      background: var(--bg-surface);
+      border-color: var(--border-subtle);
+      color: var(--text-primary);
     }
 
     /* ==========================================================================
@@ -98,14 +193,14 @@
     }
 
     .navbar {
-      max-width: 1240px;
+      max-width: 1200px;
       width: 100%;
       margin: 0 auto;
-      padding: 1.5rem 2rem;
+      padding: 1.25rem 2rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid var(--border-light);
+      border-bottom: 1px solid var(--border-subtle);
     }
 
     .brand {
@@ -117,15 +212,27 @@
     }
 
     .brand-icon {
-      width: 28px;
-      height: 28px;
+      width: 22px;
+      height: 22px;
       color: var(--accent);
     }
 
     .brand-name {
-      font-family: var(--font-serif);
-      font-size: 1.65rem;
-      letter-spacing: -0.01em;
+      font-family: var(--font-pixel);
+      font-size: 1.2rem;
+      letter-spacing: 0.04em;
+      color: var(--text-primary);
+    }
+
+    .brand-tag {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--accent);
+      background: var(--accent-subtle);
+      padding: 0.15rem 0.45rem;
+      border-radius: var(--radius-xs);
+      border: 1px solid var(--border-subtle);
+      margin-left: 0.25rem;
     }
 
     .nav-actions {
@@ -137,53 +244,82 @@
     .badge-privacy {
       display: inline-flex;
       align-items: center;
-      gap: 0.4rem;
-      font-size: 0.8rem;
-      color: var(--text-secondary);
+      gap: 0.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
       background: var(--bg-surface);
-      padding: 0.4rem 0.75rem;
-      border-radius: 999px;
-      border: 1px solid var(--border-light);
+      padding: 0.35rem 0.75rem;
+      border-radius: var(--radius-xs);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .badge-privacy .pulse-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: var(--accent);
+      box-shadow: 0 0 6px var(--accent);
     }
 
     /* Hero Section */
     .hero {
-      max-width: 1240px;
+      max-width: 1100px;
       width: 100%;
       margin: 0 auto;
-      padding: 4rem 2rem 3.5rem;
+      padding: 3.5rem 2rem 2.5rem;
       display: grid;
-      grid-template-columns: 1.08fr 0.92fr;
-      gap: 4rem;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 3.5rem;
       align-items: center;
     }
 
-    .hero-eyebrow {
+    .terminal-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
       font-family: var(--font-mono);
-      font-size: 0.78rem;
-      text-transform: uppercase;
+      font-size: 0.75rem;
       letter-spacing: 0.08em;
-      color: var(--accent);
-      margin-bottom: 1rem;
-      display: block;
+      text-transform: uppercase;
+      color: var(--accent-active);
+      background: var(--bg-surface);
+      padding: 0.3rem 0.65rem;
+      border-radius: var(--radius-xs);
+      border: 1px solid var(--border-subtle);
+      margin-bottom: 1.25rem;
+    }
+
+    .terminal-tag .cursor {
+      display: inline-block;
+      width: 6px;
+      height: 12px;
+      background: var(--accent-active);
+      animation: blink 1.2s infinite;
+    }
+
+    @keyframes blink {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
     }
 
     .hero-title {
-      font-family: var(--font-serif);
-      font-size: clamp(2.75rem, 5vw, 4.25rem);
+      font-family: var(--font-pixel);
+      font-size: clamp(2rem, 4vw, 3rem);
       font-weight: 400;
-      line-height: 1.05;
-      letter-spacing: -0.02em;
+      line-height: 1.18;
+      letter-spacing: -0.01em;
       margin-bottom: 1.25rem;
       color: var(--text-primary);
     }
 
     .hero-subtitle {
-      font-size: 1.1rem;
+      font-family: var(--font-sans);
+      font-size: 1rem;
       line-height: 1.65;
       color: var(--text-secondary);
       margin-bottom: 2rem;
-      max-width: 540px;
+      max-width: 520px;
     }
 
     .hero-cta-group {
@@ -191,68 +327,14 @@
       flex-wrap: wrap;
       gap: 0.85rem;
       align-items: center;
-      margin-bottom: 2.25rem;
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.55rem;
-      font-family: var(--font-sans);
-      font-size: 0.95rem;
-      font-weight: 500;
-      padding: 0.8rem 1.45rem;
-      border-radius: var(--radius-sm);
-      border: 1px solid transparent;
-      cursor: pointer;
-      transition: all 0.18s ease;
-      text-decoration: none;
-    }
-
-    .btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .btn-primary {
-      background-color: var(--accent);
-      color: #FFFFFF;
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      background-color: var(--accent-hover);
-      transform: translateY(-1px);
-    }
-
-    .btn-secondary {
-      background-color: var(--bg-elevated);
-      color: var(--text-primary);
-      border-color: var(--border-light);
-    }
-
-    .btn-secondary:hover:not(:disabled) {
-      background-color: var(--bg-surface);
-      border-color: #C5BFB4;
-    }
-
-    .btn-ghost {
-      background: transparent;
-      color: var(--text-secondary);
-      padding: 0.6rem 0.9rem;
-    }
-
-    .btn-ghost:hover:not(:disabled) {
-      background: var(--bg-surface);
-      color: var(--text-primary);
     }
 
     /* Visual Open Book Illustration Showcase */
     .book-showcase {
       background: var(--bg-surface);
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius-lg);
-      padding: 2.5rem 2rem;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 2.25rem 2rem;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -263,50 +345,49 @@
 
     .sample-book-3d {
       width: 100%;
-      max-width: 390px;
+      max-width: 380px;
       aspect-ratio: 1.45 / 1;
       display: flex;
-      background: #FFFFFF;
-      border-radius: 4px;
-      box-shadow: 0 20px 38px -10px rgba(28, 27, 24, 0.22), 0 4px 12px rgba(28, 27, 24, 0.08);
+      background: #152018;
+      border-radius: var(--radius-xs);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
       position: relative;
       perspective: 1200px;
-      border: 1px solid #DCD7CD;
+      border: 1px solid var(--border-subtle);
     }
 
     .sample-page {
       flex: 1;
-      padding: 1.35rem;
+      padding: 1.25rem;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       position: relative;
-      background: #FAF9F6;
+      background: #18241B;
     }
 
     .sample-page-left {
-      border-right: 1px solid #E5E0D6;
-      background: linear-gradient(90deg, #FAF9F6 88%, #EBE6DC 100%);
+      border-right: 1px solid var(--border-subtle);
+      background: linear-gradient(90deg, #18241B 88%, #111A13 100%);
     }
 
     .sample-page-right {
-      background: linear-gradient(-90deg, #FAF9F6 88%, #EBE6DC 100%);
+      background: linear-gradient(-90deg, #18241B 88%, #111A13 100%);
     }
 
-    /* Animated turning leaf on hero demo */
     .sample-turning-leaf {
       position: absolute;
       right: 0;
       top: 0;
       width: 50%;
       height: 100%;
-      background: linear-gradient(-90deg, #FFFFFF 80%, #EFECE4 100%);
+      background: linear-gradient(-90deg, #1D2B21 80%, #152018 100%);
       transform-origin: left center;
       transform: rotateY(-28deg);
-      box-shadow: -8px 4px 18px rgba(0, 0, 0, 0.12);
-      border: 1px solid #E2DDD3;
+      box-shadow: -8px 4px 18px rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border-hover);
       border-left: none;
-      padding: 1.35rem;
+      padding: 1.25rem;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -315,99 +396,141 @@
     }
 
     .book-showcase:hover .sample-turning-leaf {
-      transform: rotateY(-52deg);
+      transform: rotateY(-54deg);
     }
 
     .mock-line {
-      height: 6px;
-      background: #DEDAD0;
-      border-radius: 3px;
+      height: 5px;
+      background: #2B3A2E;
+      border-radius: 2px;
       margin-bottom: 8px;
     }
 
     .mock-line.short { width: 55%; }
     .mock-line.title {
-      height: 12px;
+      height: 9px;
       width: 75%;
-      background: #9E3B24;
-      opacity: 0.75;
-      margin-bottom: 14px;
+      background: var(--accent);
+      margin-bottom: 12px;
     }
 
     .mock-art {
-      height: 68px;
-      background: #EAE5DB;
-      border-radius: 4px;
-      margin: 8px 0 12px;
-      border: 1px solid #DFDAD0;
+      height: 58px;
+      background: #111A13;
+      border-radius: var(--radius-xs);
+      margin: 8px 0 10px;
+      border: 1px solid var(--border-subtle);
       display: flex;
       align-items: center;
       justify-content: center;
       color: var(--text-muted);
-      font-family: var(--font-serif);
-      font-style: italic;
-      font-size: 0.9rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
     }
 
     .showcase-caption {
-      margin-top: 1.35rem;
+      margin-top: 1.25rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
       width: 100%;
-      padding-top: 1rem;
-      border-top: 1px solid var(--border-light);
-      font-size: 0.85rem;
-      color: var(--text-secondary);
+      padding-top: 0.85rem;
+      border-top: 1px solid var(--border-subtle);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--text-muted);
     }
 
     /* Upload Section */
     .upload-wrapper {
-      max-width: 1240px;
+      max-width: 1100px;
       width: 100%;
       margin: 0 auto 3.5rem;
       padding: 0 2rem;
     }
 
     .upload-card {
-      background: var(--bg-elevated);
-      border: 2px dashed #C7C1B6;
-      border-radius: var(--radius-lg);
-      padding: 2.75rem 2rem;
+      background: var(--bg-surface);
+      border: 1px dashed var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 3rem 2rem;
       text-align: center;
       transition: all 0.2s ease;
       box-shadow: var(--shadow-soft);
       position: relative;
+      cursor: pointer;
+    }
+
+    .upload-card:hover {
+      border-color: var(--border-hover);
+      background: var(--bg-elevated);
     }
 
     .upload-card.drag-over {
-      border-color: var(--accent);
-      background: #FCF9F7;
+      border-color: var(--accent-active);
+      border-style: solid;
+      background: #162419;
+      box-shadow: 0 0 24px rgba(102, 139, 107, 0.25);
       transform: scale(1.005);
     }
 
+    /* Retro Technical Corner Reticles */
+    .upload-card::before {
+      content: "+";
+      position: absolute;
+      top: 10px;
+      left: 14px;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      color: var(--border-hover);
+      pointer-events: none;
+    }
+
+    .upload-card::after {
+      content: "+";
+      position: absolute;
+      bottom: 10px;
+      right: 14px;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      color: var(--border-hover);
+      pointer-events: none;
+    }
+
     .upload-icon-circle {
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
-      background: var(--accent-subtle);
+      width: 52px;
+      height: 52px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
       color: var(--accent);
       display: flex;
       align-items: center;
       justify-content: center;
       margin: 0 auto 1.15rem;
+      transition: all 0.18s ease;
+    }
+
+    .upload-card:hover .upload-icon-circle {
+      border-color: var(--accent);
+      color: var(--accent-active);
+      background: var(--accent-subtle);
     }
 
     .upload-heading {
-      font-family: var(--font-serif);
-      font-size: 1.85rem;
-      font-weight: 400;
-      margin-bottom: 0.4rem;
+      font-family: var(--font-mono);
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
     }
 
     .upload-subtext {
+      font-size: 0.88rem;
       color: var(--text-secondary);
-      font-size: 0.95rem;
       margin-bottom: 1.5rem;
     }
 
@@ -419,13 +542,14 @@
     }
 
     .privacy-footnote {
-      margin-top: 1.25rem;
-      font-size: 0.8rem;
+      margin-top: 1.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
       color: var(--text-muted);
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 0.4rem;
+      gap: 0.45rem;
     }
 
     /* Selected File State & Options */
@@ -434,8 +558,8 @@
       max-width: 640px;
       width: 100%;
       margin: 1.5rem auto 0;
-      background: var(--bg-warm);
-      border: 1px solid var(--border-light);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
       padding: 1.25rem 1.5rem;
       text-align: left;
@@ -453,7 +577,7 @@
       justify-content: space-between;
       gap: 1rem;
       padding-bottom: 1rem;
-      border-bottom: 1px solid var(--border-light);
+      border-bottom: 1px solid var(--border-subtle);
       min-width: 0;
       width: 100%;
     }
@@ -479,8 +603,9 @@
     }
 
     .file-name {
+      font-family: var(--font-mono);
       font-weight: 600;
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       color: var(--text-primary);
       white-space: nowrap;
       overflow: hidden;
@@ -491,13 +616,28 @@
 
     .file-size {
       font-family: var(--font-mono);
-      font-size: 0.78rem;
-      color: var(--text-secondary);
+      font-size: 0.75rem;
+      color: var(--text-muted);
       white-space: nowrap;
+      margin-top: 0.15rem;
     }
 
     .file-meta-row #remove-file-btn {
       flex-shrink: 0;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xs);
+      padding: 0.35rem 0.75rem;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .file-meta-row #remove-file-btn:hover {
+      color: var(--error-text);
+      border-color: var(--error-border);
+      background: var(--error-bg);
     }
 
     .book-config-row {
@@ -512,25 +652,28 @@
     .checkbox-label {
       display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
-      font-size: 0.88rem;
+      gap: 0.55rem;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
       color: var(--text-secondary);
       cursor: pointer;
+      user-select: none;
     }
 
     .checkbox-label input {
       accent-color: var(--accent);
       width: 16px;
       height: 16px;
+      cursor: pointer;
     }
 
     /* Password Prompt */
     .password-panel {
       display: none;
-      max-width: 480px;
+      max-width: 520px;
       margin: 1.25rem auto 0;
-      background: var(--bg-warm);
-      border: 1px solid var(--border-light);
+      background: var(--bg-elevated);
+      border: 1px solid var(--warn-border);
       border-radius: var(--radius-md);
       padding: 1.25rem;
       text-align: left;
@@ -543,16 +686,23 @@
     .password-input-group {
       display: flex;
       gap: 0.5rem;
-      margin-top: 0.65rem;
+      margin-top: 0.75rem;
     }
 
     .text-input {
       flex: 1;
       padding: 0.6rem 0.85rem;
-      border: 1px solid var(--border-light);
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
       border-radius: var(--radius-sm);
-      font-family: var(--font-sans);
-      font-size: 0.9rem;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+    }
+
+    .text-input:focus {
+      border-color: var(--accent);
+      outline: none;
     }
 
     /* Alerts & Warnings */
@@ -560,9 +710,10 @@
       display: none;
       max-width: 640px;
       margin: 1rem auto 0;
-      padding: 0.85rem 1.15rem;
+      padding: 0.75rem 1.15rem;
       border-radius: var(--radius-sm);
-      font-size: 0.88rem;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
       text-align: left;
       align-items: center;
       justify-content: space-between;
@@ -576,13 +727,13 @@
     .alert-error {
       background: var(--error-bg);
       color: var(--error-text);
-      border: 1px solid #F3C6C0;
+      border: 1px solid var(--error-border);
     }
 
     .alert-warn {
       background: var(--warn-bg);
       color: var(--warn-text);
-      border: 1px solid #F2DEAC;
+      border: 1px solid var(--warn-border);
     }
 
     /* Processing Progress Panel */
@@ -590,10 +741,10 @@
       display: none;
       max-width: 580px;
       margin: 1.5rem auto 0;
-      background: var(--bg-warm);
-      border: 1px solid var(--border-light);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
-      padding: 1.35rem 1.5rem;
+      padding: 1.25rem 1.5rem;
       text-align: left;
     }
 
@@ -606,21 +757,24 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 0.6rem;
-      font-size: 0.9rem;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
       font-weight: 500;
     }
 
     .progress-pct {
       font-family: var(--font-mono);
-      font-size: 0.82rem;
-      color: var(--accent);
+      font-size: 0.85rem;
+      color: var(--accent-active);
+      font-weight: 700;
     }
 
     .progress-track {
       width: 100%;
       height: 8px;
-      background: #E2DDD3;
-      border-radius: 999px;
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xs);
       overflow: hidden;
       margin-bottom: 0.85rem;
     }
@@ -628,7 +782,8 @@
     .progress-fill {
       height: 100%;
       width: 0%;
-      background: var(--accent);
+      background: var(--accent-active);
+      box-shadow: 0 0 10px var(--accent-glow);
       transition: width 0.15s ease;
     }
 
@@ -636,33 +791,47 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 0.82rem;
-      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--text-muted);
     }
 
-    /* Feature Strip */
+    /* Technical Spec Strip */
     .features-section {
-      max-width: 1240px;
+      max-width: 1100px;
       width: 100%;
-      margin: 0 auto 4rem;
+      margin: 0 auto 3.5rem;
       padding: 2.5rem 2rem 0;
-      border-top: 1px solid var(--border-light);
+      border-top: 1px solid var(--border-subtle);
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 2rem;
+      gap: 1.5rem;
+    }
+
+    .feature-item {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      transition: border-color 0.18s ease;
+    }
+
+    .feature-item:hover {
+      border-color: var(--border-hover);
     }
 
     .feature-item h3 {
-      font-family: var(--font-serif);
-      font-size: 1.35rem;
-      font-weight: 400;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
       margin-bottom: 0.45rem;
       color: var(--text-primary);
     }
 
     .feature-item p {
-      font-size: 0.88rem;
-      line-height: 1.55;
+      font-size: 0.82rem;
+      line-height: 1.5;
       color: var(--text-secondary);
     }
 
@@ -672,7 +841,7 @@
     #reader-view {
       position: fixed;
       inset: 0;
-      background-color: var(--bg-reader);
+      background-color: var(--bg-base);
       display: flex;
       flex-direction: column;
       z-index: 100;
@@ -684,14 +853,14 @@
 
     /* Top Reader Bar */
     .reader-topbar {
-      height: 54px;
-      background: var(--bg-reader-bar);
-      border-bottom: 1px solid var(--border-dark);
+      height: 52px;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
       padding: 0 1.25rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      color: #EAE6DF;
+      color: var(--text-primary);
       z-index: 30;
       flex-shrink: 0;
     }
@@ -704,21 +873,24 @@
     }
 
     .reader-doc-title {
-      font-size: 0.92rem;
-      font-weight: 500;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      font-weight: 600;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 360px;
+      max-width: 380px;
+      color: var(--text-primary);
     }
 
     .reader-badge {
       font-family: var(--font-mono);
       font-size: 0.72rem;
       padding: 0.2rem 0.5rem;
-      background: rgba(255, 255, 255, 0.08);
-      border-radius: 4px;
-      color: #B8B2A8;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xs);
+      color: var(--text-muted);
     }
 
     .reader-top-actions {
@@ -729,23 +901,25 @@
 
     .icon-btn {
       background: transparent;
-      border: 1px solid transparent;
-      color: #D8D3C8;
-      height: 36px;
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      height: 34px;
       padding: 0 0.65rem;
       border-radius: var(--radius-sm);
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 0.4rem;
-      font-size: 0.82rem;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
       cursor: pointer;
       transition: all 0.15s ease;
     }
 
     .icon-btn:hover:not(:disabled) {
-      background: rgba(255, 255, 255, 0.09);
-      color: #FFFFFF;
+      background: var(--bg-elevated);
+      border-color: var(--border-hover);
+      color: var(--text-primary);
     }
 
     .icon-btn:disabled {
@@ -754,9 +928,15 @@
     }
 
     .icon-btn.active {
-      background: rgba(158, 59, 36, 0.35);
+      background: var(--accent-subtle);
       border-color: var(--accent);
-      color: #FFFFFF;
+      color: var(--accent-active);
+    }
+
+    #close-reader-btn:hover {
+      background: var(--error-bg);
+      border-color: var(--error-border);
+      color: var(--error-text);
     }
 
     /* Central Book Stage */
@@ -766,7 +946,7 @@
       display: block;
       overflow: hidden;
       padding: 0;
-      background: radial-gradient(circle at center, #2B2925 0%, #191816 100%);
+      background: radial-gradient(circle at center, #141E16 0%, #0B0F0C 100%);
       user-select: none;
       -webkit-user-select: none;
       touch-action: pan-x pan-y;
@@ -776,7 +956,7 @@
       overflow: auto;
       cursor: grab;
       scrollbar-width: thin;
-      scrollbar-color: rgba(255, 255, 255, 0.25) rgba(0, 0, 0, 0.2);
+      scrollbar-color: var(--border-hover) var(--bg-base);
     }
 
     .reader-stage.zoomed:active {
@@ -789,19 +969,19 @@
     }
 
     .reader-stage.zoomed::-webkit-scrollbar-track {
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--bg-base);
     }
 
     .reader-stage.zoomed::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.25);
-      border-radius: 4px;
+      background: var(--border-subtle);
+      border-radius: var(--radius-xs);
     }
 
     .reader-stage.zoomed::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 255, 255, 0.4);
+      background: var(--border-hover);
     }
 
-    /* Side Navigation Floating Arrows */
+    /* Floating Side Navigation Arrows */
     .stage-nav-arrow {
       position: fixed;
       top: 50%;
@@ -809,21 +989,22 @@
       width: 44px;
       height: 64px;
       border-radius: var(--radius-md);
-      background: rgba(40, 38, 35, 0.72);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: #EAE6DF;
+      background: rgba(18, 26, 20, 0.88);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       z-index: 25;
-      transition: background 0.15s ease, color 0.15s ease, opacity 0.15s ease;
-      backdrop-filter: blur(4px);
+      transition: all 0.15s ease;
+      backdrop-filter: blur(8px);
     }
 
     .stage-nav-arrow:hover:not(:disabled) {
-      background: rgba(158, 59, 36, 0.85);
-      color: #FFFFFF;
+      background: var(--bg-elevated);
+      border-color: var(--accent);
+      color: var(--accent-active);
     }
 
     .stage-nav-arrow:disabled {
@@ -852,13 +1033,13 @@
       transition: transform 0.18s ease-out;
     }
 
-    /* CRITICAL FIX: Do not set overflow:hidden or position:relative on .flip-page
-       because StPageFlip applies position:absolute and dynamic clip-paths during backward turns */
+    /* CRITICAL: Preserved backward curl fix */
     .flip-page {
-      background-color: #FFFFFF;
+      background-color: #FFFFFF !important;
       box-sizing: border-box;
-      backface-visibility: visible;
-      -webkit-backface-visibility: visible;
+      backface-visibility: hidden !important;
+      -webkit-backface-visibility: hidden !important;
+      overflow: visible !important;
       will-change: transform, clip-path;
     }
 
@@ -870,8 +1051,8 @@
       pointer-events: none;
       user-select: none;
       background-color: #FFFFFF;
-      backface-visibility: visible;
-      -webkit-backface-visibility: visible;
+      backface-visibility: hidden !important;
+      -webkit-backface-visibility: hidden !important;
     }
 
     /* Realistic Central Spine Crease & Page Curvature Lighting */
@@ -899,7 +1080,6 @@
       z-index: 2;
     }
 
-    /* Subtle Outer Page Thickness Effect */
     .flip-page.--left {
       border-left: 1px solid #D8D4CB;
     }
@@ -923,15 +1103,15 @@
 
     /* Bottom Reader Toolbar */
     .reader-bottombar {
-      height: 58px;
-      background: var(--bg-reader-bar);
-      border-top: 1px solid var(--border-dark);
+      height: 54px;
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border-subtle);
       padding: 0 1.25rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 1rem;
-      color: #EAE6DF;
+      color: var(--text-primary);
       z-index: 30;
       flex-shrink: 0;
     }
@@ -944,12 +1124,12 @@
 
     .page-indicator-pill {
       font-family: var(--font-mono);
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       padding: 0.35rem 0.85rem;
-      background: rgba(0, 0, 0, 0.28);
-      border: 1px solid var(--border-dark);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
       border-radius: var(--radius-sm);
-      color: #F4F1EA;
+      color: var(--text-primary);
       min-width: 145px;
       text-align: center;
     }
@@ -957,39 +1137,45 @@
     .goto-form {
       display: flex;
       align-items: center;
-      gap: 0.35rem;
+      gap: 0.4rem;
     }
 
     .goto-input {
-      width: 58px;
+      width: 54px;
       height: 32px;
-      background: rgba(0, 0, 0, 0.3);
-      border: 1px solid var(--border-dark);
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
       border-radius: var(--radius-sm);
-      color: #FFFFFF;
+      color: var(--text-primary);
       font-family: var(--font-mono);
       font-size: 0.82rem;
       text-align: center;
       padding: 0 0.35rem;
     }
 
+    .goto-input:focus {
+      border-color: var(--accent);
+      outline: none;
+    }
+
     .zoom-readout {
       font-family: var(--font-mono);
-      font-size: 0.78rem;
+      font-size: 0.8rem;
       width: 48px;
       text-align: center;
-      color: #C7C2B8;
+      color: var(--accent-active);
+      font-weight: 600;
     }
 
     /* Table of Contents Drawer */
     .toc-drawer {
       position: absolute;
-      top: 54px;
+      top: 52px;
       left: 0;
-      bottom: 58px;
+      bottom: 54px;
       width: 280px;
-      background: var(--bg-reader-bar);
-      border-right: 1px solid var(--border-dark);
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border-subtle);
       z-index: 28;
       padding: 1rem;
       overflow-y: auto;
@@ -1002,14 +1188,14 @@
     }
 
     .toc-title {
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       font-family: var(--font-mono);
       text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: #9A948A;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
       margin-bottom: 0.75rem;
       padding-bottom: 0.5rem;
-      border-bottom: 1px solid var(--border-dark);
+      border-bottom: 1px solid var(--border-subtle);
     }
 
     .toc-list {
@@ -1020,33 +1206,36 @@
       width: 100%;
       text-align: left;
       background: transparent;
-      border: none;
-      color: #DCD7CE;
+      border: 1px solid transparent;
+      color: var(--text-secondary);
       padding: 0.55rem 0.6rem;
       border-radius: var(--radius-sm);
-      font-size: 0.85rem;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
       cursor: pointer;
       display: flex;
       justify-content: space-between;
       gap: 0.5rem;
+      transition: all 0.15s ease;
     }
 
     .toc-item-btn:hover {
-      background: rgba(255, 255, 255, 0.08);
-      color: #FFFFFF;
+      background: var(--bg-elevated);
+      border-color: var(--border-subtle);
+      color: var(--text-primary);
     }
 
     /* Help & Shortcuts Modal */
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(12, 11, 10, 0.72);
+      background: rgba(11, 15, 12, 0.82);
       display: none;
       align-items: center;
       justify-content: center;
       z-index: 200;
       padding: 1rem;
-      backdrop-filter: blur(3px);
+      backdrop-filter: blur(4px);
     }
 
     .modal-backdrop.open {
@@ -1054,14 +1243,14 @@
     }
 
     .modal-dialog {
-      background: var(--bg-reader-bar);
-      border: 1px solid var(--border-dark);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
-      color: #F2EFE9;
+      color: var(--text-primary);
       max-width: 480px;
       width: 100%;
       padding: 1.5rem;
-      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.75);
     }
 
     .modal-header {
@@ -1070,38 +1259,40 @@
       align-items: center;
       margin-bottom: 1rem;
       padding-bottom: 0.75rem;
-      border-bottom: 1px solid var(--border-dark);
+      border-bottom: 1px solid var(--border-subtle);
     }
 
     .modal-header h2 {
-      font-family: var(--font-serif);
-      font-size: 1.5rem;
+      font-family: var(--font-pixel);
+      font-size: 1.15rem;
       font-weight: 400;
+      letter-spacing: 0.02em;
     }
 
     .shortcut-grid {
       display: grid;
       grid-template-columns: 1fr;
       gap: 0.65rem;
-      font-size: 0.88rem;
+      font-size: 0.85rem;
     }
 
     .shortcut-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0.35rem 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 0.4rem 0;
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
     }
 
     kbd {
       font-family: var(--font-mono);
-      font-size: 0.76rem;
-      background: #181715;
-      border: 1px solid #45413B;
+      font-size: 0.75rem;
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
       padding: 0.2rem 0.5rem;
-      border-radius: 4px;
-      color: #E5E0D5;
+      border-radius: var(--radius-xs);
+      color: var(--accent-active);
     }
 
     /* Reduced Motion Preferences */
@@ -1128,9 +1319,8 @@
       .navbar { padding: 1rem 1.25rem; }
       .badge-privacy { display: none; }
       .features-section { grid-template-columns: 1fr; }
-      .reader-stage { padding: 0.75rem 0.5rem; }
       .stage-nav-arrow { display: none; }
-      .reader-doc-title { max-width: 150px; }
+      .reader-doc-title { max-width: 140px; }
       .reader-bottombar {
         padding: 0 0.65rem;
         overflow-x: auto;
@@ -1154,42 +1344,38 @@
   <div id="landing-view">
     <header class="navbar">
       <a href="#" class="brand" aria-label="FlipBook Studio Home">
-        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
           <path d="M12 2v20"/>
         </svg>
-        <span class="brand-name">FlipBook Studio</span>
+        <span class="brand-name">FLIPBOOK</span>
       </a>
       <div class="nav-actions">
-        <span class="badge-privacy" title="Your files never leave your computer">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-          </svg>
-          100% Client-Side Processing
-        </span>
+        <button type="button" class="btn btn-secondary" id="try-sample-btn" style="padding: 0.45rem 0.95rem; font-size: 0.8rem;">
+          Load Sample Booklet
+        </button>
       </div>
     </header>
 
     <main>
       <section class="hero">
         <div class="hero-content">
-          <span class="hero-eyebrow">Interactive Editorial Reader</span>
-          <h1 class="hero-title">Turn Your PDFs Into Interactive Books.</h1>
+          <div class="terminal-tag">
+            <span class="cursor"></span>
+            <span>SYSTEM // PDF_TO_3D_ENGINE</span>
+          </div>
+          <h1 class="hero-title">GIVE YOUR PDF A NEW DIMENSION.</h1>
           <p class="hero-subtitle">
-            Upload any PDF document and experience it like a physical edition—complete with two-page spreads, tactile page-turning physics, spine shading, and high-resolution zoom.
+            Transform flat documents into tactile 3D editions in real time. Experience dual-page spreads, realistic page curl physics, dynamic spine crease shading, and deep vector zoom — processed client-side with zero server round-trips.
           </p>
           <div class="hero-cta-group">
             <button type="button" class="btn btn-primary" id="hero-create-btn">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                 <polyline points="17 8 12 3 7 8"/>
                 <line x1="12" y1="3" x2="12" y2="15"/>
               </svg>
-              Create Your Flipbook
-            </button>
-            <button type="button" class="btn btn-secondary" id="try-sample-btn">
-              Try Sample Architecture Book
+              Upload PDF File
             </button>
           </div>
         </div>
@@ -1203,36 +1389,36 @@
                 <div class="mock-line"></div>
                 <div class="mock-line"></div>
                 <div class="mock-line short"></div>
-                <div class="mock-art">Plate I — Proporzioni</div>
+                <div class="mock-art">SPEC_01 // SPREAD</div>
                 <div class="mock-line"></div>
                 <div class="mock-line short"></div>
               </div>
-              <div style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted);">04</div>
+              <div style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted);">P. 04</div>
             </div>
             <div class="sample-page sample-page-right">
               <div>
                 <div class="mock-line"></div>
                 <div class="mock-line"></div>
                 <div class="mock-line short"></div>
-                <div class="mock-art">Plate II — Sezione Aurea</div>
+                <div class="mock-art">SPEC_02 // MESH</div>
                 <div class="mock-line"></div>
                 <div class="mock-line"></div>
               </div>
-              <div style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); text-align: right;">05</div>
+              <div style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); text-align: right;">P. 05</div>
             </div>
             <div class="sample-turning-leaf">
               <div>
                 <div class="mock-line title"></div>
                 <div class="mock-line"></div>
                 <div class="mock-line short"></div>
-                <div class="mock-art">Interactive 3D Curl</div>
+                <div class="mock-art">3D CURL ENGINE</div>
               </div>
-              <div style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); text-align: right;">03</div>
+              <div style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); text-align: right;">P. 03</div>
             </div>
           </div>
           <div class="showcase-caption">
-            <span>Two-page spread with central spine shadow</span>
-            <span style="font-family: var(--font-mono); font-size: 0.78rem; color: var(--accent);">Hover to preview curl</span>
+            <span>Two-Page Spread • Spine Depth Shading</span>
+            <span style="color: var(--accent-active);">Hover to Test Curl</span>
           </div>
         </div>
       </section>
@@ -1243,7 +1429,7 @@
           <input type="file" id="pdf-file-input" accept=".pdf,application/pdf" class="sr-only" />
           
           <div class="upload-icon-circle">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
               <polyline points="14 2 14 8 20 8"></polyline>
               <line x1="12" y1="18" x2="12" y2="12"></line>
@@ -1251,12 +1437,12 @@
             </svg>
           </div>
 
-          <h2 class="upload-heading">Drop your PDF document here</h2>
-          <p class="upload-subtext">Supports portrait, landscape, single-page, and multi-page documents</p>
+          <h2 class="upload-heading">Select or Drop PDF Document</h2>
+          <p class="upload-subtext">Supports single-page, multi-page, portrait, and landscape documents</p>
 
           <div class="upload-buttons">
             <button type="button" class="btn btn-secondary" id="choose-pdf-btn">
-              Choose PDF File
+              Browse Local PDF
             </button>
           </div>
 
@@ -1285,16 +1471,16 @@
               </label>
 
               <button type="button" class="btn btn-primary" id="generate-flipbook-btn">
-                Generate Flipbook
+                Generate Flipbook →
               </button>
             </div>
           </div>
 
           <!-- Password Prompt for Encrypted PDFs -->
           <div class="password-panel" id="password-panel">
-            <div style="font-weight: 600; font-size: 0.9rem;">Password-Protected PDF</div>
-            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 0.2rem;">
-              This document is encrypted. Enter its password to unlock and render pages locally.
+            <div style="font-family: var(--font-mono); font-weight: 700; font-size: 0.88rem; color: var(--warn-text);">// ENCRYPTED PDF DETECTED</div>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 0.25rem;">
+              This document is password protected. Enter the password below to decrypt and render locally.
             </p>
             <div class="password-input-group">
               <input type="password" id="pdf-password-input" class="text-input" placeholder="Enter PDF password..." />
@@ -1321,7 +1507,7 @@
             </div>
             <div class="progress-footer">
               <span id="progress-page-count">Preparing pages...</span>
-              <button type="button" class="btn btn-ghost" id="cancel-render-btn" style="padding: 0.25rem 0.6rem; font-size: 0.8rem;">
+              <button type="button" class="btn btn-ghost" id="cancel-render-btn" style="padding: 0.25rem 0.6rem; font-size: 0.78rem;">
                 Cancel
               </button>
             </div>
@@ -1331,28 +1517,28 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
             </svg>
-            <span>Privacy Guarantee: PDFs are rendered inside your browser via Web Workers and never uploaded to any external server.</span>
+            <span>PRIVACY: PDF rendered locally via browser Web Workers • Never transmitted across any network</span>
           </div>
         </div>
       </section>
 
-      <!-- Features Section -->
+      <!-- Technical Capabilities -->
       <section class="features-section">
         <div class="feature-item">
-          <h3>Realistic Page Turns</h3>
-          <p>Drag page corners or click edges to experience physical paper folding, dynamic spine shadows, and perspective lighting.</p>
+          <h3>01 // DUAL-PAGE SPREAD</h3>
+          <p>Automatic two-page editorial spreads on desktop monitors and responsive single-page mode on mobile screens.</p>
         </div>
         <div class="feature-item">
-          <h3>Adaptive Spreads</h3>
-          <p>Enjoy side-by-side two-page spreads on desktop monitors and automatic single-page portrait reading on mobile phones.</p>
+          <h3>02 // 3D CURL PHYSICS</h3>
+          <p>Tactile drag-and-flip corner mechanics with dynamic mesh deformation and central spine shadow depth.</p>
         </div>
         <div class="feature-item">
-          <h3>Crisp Vector Zoom</h3>
-          <p>Inspect fine typography and diagrams with multi-level zoom, Ctrl+Wheel magnification, and click-and-drag panning.</p>
+          <h3>03 // DEEP VECTOR ZOOM</h3>
+          <p>Multi-level magnification with full-bleed panning, scrollwheel support, and edge-to-edge canvas inspection.</p>
         </div>
         <div class="feature-item">
-          <h3>Complete Privacy</h3>
-          <p>Zero backend dependencies, zero telemetry, and automatic memory cleanup when switching or closing documents.</p>
+          <h3>04 // IN-MEMORY ENGINE</h3>
+          <p>Zero cloud dependencies or analytics. Document buffers are immediately reclaimed upon closing.</p>
         </div>
       </section>
     </main>
@@ -1499,7 +1685,7 @@
   <div class="modal-backdrop" id="help-modal" role="dialog" aria-modal="true" aria-labelledby="help-modal-title">
     <div class="modal-dialog">
       <div class="modal-header">
-        <h2 id="help-modal-title">Reading Controls &amp; Shortcuts</h2>
+        <h2 id="help-modal-title">// SHORTCUT REFERENCE</h2>
         <button type="button" class="icon-btn" id="close-help-btn" aria-label="Close Help Dialog">&#10005;</button>
       </div>
       <div class="shortcut-grid">
@@ -2046,12 +2232,12 @@
     AppState.defaultAspectRatio = 0.75;
 
     const specs = [
-      { title: 'ARCHITECTURA MODERNA', subtitle: 'Proportions, Light & Materiality', footer: 'FRONT COVER', bg: '#23211E', dark: true },
-      { title: 'I. The Golden Section', subtitle: 'Classical harmony in editorial grids.', footer: 'Page 2', bg: '#FAF8F5', dark: false },
-      { title: 'II. Tactile Mechanics', subtitle: 'Physical page curvature and spine shadows.', footer: 'Page 3', bg: '#FAF8F5', dark: false },
-      { title: 'III. Chiaroscuro & Depth', subtitle: 'Balancing contrast between ivory leaves.', footer: 'Page 4', bg: '#FAF8F5', dark: false },
-      { title: 'IV. Structural Typography', subtitle: 'Serif headlines paired with monospace indices.', footer: 'Page 5', bg: '#FAF8F5', dark: false },
-      { title: 'COLOPHON', subtitle: 'Rendered locally in FlipBook Studio.', footer: 'BACK COVER', bg: '#23211E', dark: true }
+      { title: 'SYSTEM SPECIMEN // 01', subtitle: 'Interactive 3D Leaf Curl & Physics Engine', footer: 'FRONT COVER // FLIPBOOK ENGINE', bg: '#121A14', border: '#2B3A2E', dark: true },
+      { title: 'I. Classical Proportion', subtitle: 'Dual-page spreads balanced for editorial reading.', footer: 'PAGE 02 // TECHNICAL SPEC', bg: '#FAFAF7', border: '#DCD7CD', dark: false },
+      { title: 'II. Curl Mesh Physics', subtitle: 'Simulated paper stiffness with reactive spine shading.', footer: 'PAGE 03 // TECHNICAL SPEC', bg: '#FAFAF7', border: '#DCD7CD', dark: false },
+      { title: 'III. Vector Scale Layer', subtitle: 'Pan-and-zoom inspection with full viewport bounds.', footer: 'PAGE 04 // TECHNICAL SPEC', bg: '#FAFAF7', border: '#DCD7CD', dark: false },
+      { title: 'IV. Zero Cloud Latency', subtitle: 'Rendered entirely via client-local WebAssembly.', footer: 'PAGE 05 // TECHNICAL SPEC', bg: '#FAFAF7', border: '#DCD7CD', dark: false },
+      { title: 'COLOPHON // END OF FILE', subtitle: 'Rendered locally in FlipBook Studio.', footer: 'BACK COVER // FLIPBOOK ENGINE', bg: '#121A14', border: '#2B3A2E', dark: true }
     ];
 
     for (let i = 0; i < specs.length; i++) {
@@ -2062,17 +2248,17 @@
       const ctx = canvas.getContext('2d');
       ctx.fillStyle = s.bg;
       ctx.fillRect(0, 0, 900, 1200);
-      ctx.strokeStyle = s.dark ? '#524D46' : '#D8D3C8';
+      ctx.strokeStyle = s.border;
       ctx.lineWidth = 3;
       ctx.strokeRect(55, 55, 790, 1090);
-      ctx.fillStyle = s.dark ? '#F5F2EB' : '#1C1B18';
-      ctx.font = '44px Georgia, serif';
+      ctx.fillStyle = s.dark ? '#E0E6DC' : '#1C1B18';
+      ctx.font = 'bold 36px monospace';
       ctx.textAlign = 'center';
       ctx.fillText(s.title, 450, 560);
-      ctx.fillStyle = s.dark ? '#B8B2A6' : '#5C5953';
-      ctx.font = '24px sans-serif';
+      ctx.fillStyle = s.dark ? '#829184' : '#5C5953';
+      ctx.font = '22px sans-serif';
       ctx.fillText(s.subtitle, 450, 625);
-      ctx.font = '18px monospace';
+      ctx.font = '16px monospace';
       ctx.fillText(s.footer, 450, 1105);
 
       const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.9));
@@ -2080,7 +2266,7 @@
     }
 
     AppState.isProcessing = false;
-    openReaderInterface('Architectura-Moderna-Sample.pdf');
+    openReaderInterface('System-Specimen-Sample.pdf');
   }
 
   function openReaderInterface(filename) {
