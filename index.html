@@ -1501,6 +1501,24 @@
       'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   }
 
+  // Patch StPageFlip destroy: StPageFlip's built-in destroy() calls this.block.remove(),
+  // which detaches #flipbook-container from #book-zoom-layer in the DOM, making any subsequent
+  // flipbook completely invisible until the entire web page is reloaded.
+  if (window.St && window.St.PageFlip) {
+    window.St.PageFlip.prototype.destroy = function () {
+      if (this.ui) {
+        if (this.ui.onResize) {
+          try { window.removeEventListener('resize', this.ui.onResize); } catch (_) {}
+        }
+        try { this.ui.destroy(); } catch (_) {}
+      }
+      this.pages = [];
+      this.render = null;
+      this.flipController = null;
+      this.ui = null;
+    };
+  }
+
   /**
    * Application State with Sliding-Window Page Cache (Supports 6,500+ Pages)
    */
@@ -1574,7 +1592,9 @@
     closeReaderBtn: document.getElementById('close-reader-btn'),
     readerStage: document.getElementById('reader-stage'),
     bookZoomLayer: document.getElementById('book-zoom-layer'),
-    flipbookContainer: document.getElementById('flipbook-container'),
+    get flipbookContainer() {
+      return getOrCreateFlipbookContainer();
+    },
     stagePrevBtn: document.getElementById('stage-prev-btn'),
     stageNextBtn: document.getElementById('stage-next-btn'),
     restartBookBtn: document.getElementById('restart-book-btn'),
@@ -1591,6 +1611,34 @@
     helpModal: document.getElementById('help-modal'),
     closeHelpBtn: document.getElementById('close-help-btn')
   };
+
+  /**
+   * Ensures #flipbook-container is always present and attached inside #book-zoom-layer in the DOM.
+   */
+  function getOrCreateFlipbookContainer() {
+    let container = document.getElementById('flipbook-container');
+    const zoomLayer = document.getElementById('book-zoom-layer');
+    if (!container || (zoomLayer && !zoomLayer.contains(container))) {
+      if (container && container.parentNode) {
+        container.parentNode.removeChild(container);
+      }
+      container = document.createElement('div');
+      container.id = 'flipbook-container';
+      if (zoomLayer) zoomLayer.appendChild(container);
+    }
+    return container;
+  }
+
+  /**
+   * Resets styles, classes, and contents of #flipbook-container so subsequent PDF flipbooks start fresh.
+   */
+  function resetFlipbookContainer() {
+    const container = getOrCreateFlipbookContainer();
+    container.className = '';
+    container.removeAttribute('style');
+    container.innerHTML = '';
+    return container;
+  }
 
   function announce(message) {
     UI.announcer.textContent = '';
@@ -1647,12 +1695,13 @@
       AppState.originalFileUrl = null;
     }
 
-    UI.flipbookContainer.innerHTML = '';
+    resetFlipbookContainer();
     UI.tocList.innerHTML = '';
     UI.tocDrawer.classList.remove('open');
     UI.tocToggleBtn.hidden = true;
     AppState.outlineItems = [];
     AppState.totalActualPages = 0;
+    AppState.isTurning = false;
   }
 
   function validatePdfFile(file) {
@@ -2027,7 +2076,7 @@
       AppState.pageFlip = null;
     }
 
-    UI.flipbookContainer.innerHTML = '';
+    const container = resetFlipbookContainer();
     AppState.pageElements.clear();
 
     const { width, height, isSinglePageViewport } = calculateOptimalPageSize(AppState.defaultAspectRatio);
@@ -2067,11 +2116,11 @@
       appendLeaf(p, isCoverLeaf);
     }
 
-    UI.flipbookContainer.appendChild(fragment);
+    container.appendChild(fragment);
 
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    AppState.pageFlip = new St.PageFlip(UI.flipbookContainer, {
+    AppState.pageFlip = new St.PageFlip(container, {
       width,
       height,
       size: 'fixed',
@@ -2085,7 +2134,7 @@
       showPageCorners: true
     });
 
-    AppState.pageFlip.loadFromHTML(UI.flipbookContainer.querySelectorAll('.flip-page'));
+    AppState.pageFlip.loadFromHTML(container.querySelectorAll('.flip-page'));
 
     AppState.pageFlip.on('flip', () => {
       updateNavigationState();
@@ -2324,6 +2373,7 @@
         try { await document.exitFullscreen(); } catch (e) {}
       }
       await cleanupResources();
+      resetFileSelection();
       UI.readerView.classList.add('hidden');
       UI.landingView.classList.remove('hidden');
       document.body.classList.remove('reader-mode');
