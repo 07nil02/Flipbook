@@ -1498,6 +1498,13 @@
       font-size: 0.85rem;
       text-align: center;
       padding: 0 0.35rem;
+      -moz-appearance: textfield;
+    }
+
+    .goto-input::-webkit-outer-spin-button,
+    .goto-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
     }
 
     .goto-input:focus {
@@ -1524,8 +1531,8 @@
       width: 290px;
       background: #201C17;
       border-right: 1px solid var(--border-medium);
-      box-shadow: 8px 0 24px rgba(0, 0, 0, 0.7);
-      z-index: 28;
+      box-shadow: 8px 0 28px rgba(0, 0, 0, 0.85);
+      z-index: 55;
       padding: 1.25rem;
       overflow-y: auto;
       transform: translateX(-100%);
@@ -1534,6 +1541,7 @@
 
     .toc-drawer.open {
       transform: translateX(0);
+      z-index: 55;
     }
 
     .toc-title {
@@ -1711,25 +1719,40 @@
         justify-content: center;
         flex-shrink: 0;
       }
-      .reader-top-actions .icon-btn span,
+      .reader-top-actions .icon-btn span:not(.badge-count),
       .reader-doc-info .icon-btn span {
         display: none !important;
+      }
+
+      .desk-lamp-fixture {
+        top: 0.65rem;
+        left: 0.75rem;
+      }
+      .lamp-plate-label {
+        display: none;
+      }
+      .lamp-brass-plate {
+        padding: 0.35rem 0.45rem;
+      }
+      .bookmarks-drawer {
+        width: 100%;
+        max-width: 280px;
       }
 
       /* Bottombar Compact Layout */
       .reader-bottombar {
         height: 48px;
-        padding: 0 0.5rem;
+        padding: 0 0.4rem;
         overflow: hidden !important;
         justify-content: space-between;
-        gap: 0.35rem;
-      }
-      .reader-bottombar .toolbar-group {
         gap: 0.25rem;
       }
+      .reader-bottombar .toolbar-group {
+        gap: 0.2rem;
+      }
       .reader-bottombar .icon-btn {
-        width: 32px;
-        height: 32px;
+        width: 30px;
+        height: 30px;
         padding: 0;
         justify-content: center;
         flex-shrink: 0;
@@ -1738,19 +1761,42 @@
         display: none !important;
       }
       .page-indicator-pill {
-        min-width: 80px;
-        font-size: 0.75rem;
-        padding: 0.25rem 0.45rem;
+        min-width: 64px;
+        font-size: 0.72rem;
+        padding: 0.2rem 0.35rem;
         white-space: nowrap;
+        cursor: pointer;
       }
       .goto-form {
+        display: flex !important;
+        align-items: center;
+        gap: 0.2rem;
+        flex-shrink: 0;
+      }
+      .goto-form label {
         display: none !important;
       }
-      .zoom-readout {
-        display: none !important;
+      .goto-input {
+        width: 40px;
+        height: 30px;
+        font-size: 0.78rem;
+        padding: 0 0.15rem;
+        text-align: center;
+        border-radius: var(--radius-xs);
       }
+      .goto-form button {
+        width: 30px;
+        height: 30px;
+        padding: 0;
+        font-size: 0.72rem;
+        justify-content: center;
+        align-items: center;
+        flex-shrink: 0;
+      }
+      .zoom-readout,
       #zoom-out-btn,
-      #zoom-in-btn {
+      #zoom-in-btn,
+      #zoom-reset-btn {
         display: none !important;
       }
 
@@ -1762,6 +1808,389 @@
         touch-action: none !important;
       }
     }
+
+    /* ==========================================================================
+       BOOKMARKS & SILK RIBBON STYLING
+       ========================================================================== */
+    .badge-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 4px;
+      border-radius: 9px;
+      background: var(--color-oxblood);
+      color: #FFF2F0;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 700;
+      margin-left: 0.25rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    }
+
+    #bookmark-toggle-btn.active {
+      background: rgba(117, 64, 57, 0.35);
+      border-color: var(--color-oxblood);
+      color: #F8D0CB;
+      box-shadow: 0 0 10px rgba(117, 64, 57, 0.4);
+    }
+
+    #bookmark-toggle-btn.active svg {
+      fill: var(--color-oxblood);
+      stroke: #E8A8A0;
+    }
+
+    /* Physical Hanging Silk Bookmark Ribbon on Marked Leaves */
+    .flip-page.has-bookmark::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 28px;
+      width: 18px;
+      height: 52px;
+      background: linear-gradient(180deg, var(--color-oxblood) 0%, var(--color-oxblood-dark) 100%);
+      clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 82%, 0 100%);
+      box-shadow: 0 5px 12px rgba(0, 0, 0, 0.45);
+      border-top: 2px solid var(--color-brass-bright);
+      z-index: 10;
+      pointer-events: none;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+      animation: ribbon-flutter 0.25s ease-out;
+    }
+
+    .flip-page.--left.has-bookmark::before {
+      right: auto;
+      left: 28px;
+    }
+
+    @keyframes ribbon-flutter {
+      0% { transform: translateY(-12px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+
+    /* Drawer Header & Close Buttons */
+    .drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.85rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .drawer-header .toc-title {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+
+    .drawer-close-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      width: 26px;
+      height: 26px;
+      border-radius: var(--radius-xs);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.15s ease;
+    }
+
+    .drawer-close-btn:hover {
+      background: var(--color-walnut-elevated);
+      border-color: var(--color-aged-brass);
+      color: var(--color-parchment-bright);
+    }
+
+    /* Bookmarks Drawer — Antique Silk Ribbon Register */
+    .bookmarks-drawer {
+      position: absolute;
+      top: 52px;
+      right: 0;
+      bottom: 54px;
+      width: 320px;
+      background: #201C17;
+      border-left: 1px solid var(--border-medium);
+      box-shadow: -8px 0 28px rgba(0, 0, 0, 0.85);
+      z-index: 55;
+      padding: 1.25rem;
+      overflow-y: auto;
+      transform: translateX(100%);
+      transition: transform 0.22s ease;
+    }
+
+    .bookmarks-drawer.open {
+      transform: translateX(0);
+      z-index: 55;
+    }
+
+    .bookmark-item-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      padding: 0.25rem 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .bookmark-jump-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--color-aged-parchment);
+      padding: 0.5rem 0.6rem;
+      border-radius: var(--radius-xs);
+      font-family: var(--font-serif-body);
+      font-size: 0.86rem;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s ease;
+    }
+
+    .bookmark-jump-btn svg {
+      color: var(--color-oxblood);
+      fill: var(--color-oxblood);
+      flex-shrink: 0;
+    }
+
+    .bookmark-jump-btn:hover {
+      background: var(--color-walnut-elevated);
+      border-color: var(--color-aged-brass);
+      color: var(--color-parchment-bright);
+    }
+
+    .bookmark-delete-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-xs);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+
+    .bookmark-delete-btn:hover {
+      background: var(--color-oxblood-subtle);
+      border-color: var(--color-oxblood);
+      color: #E8A8A0;
+    }
+
+    .empty-bookmarks {
+      font-family: var(--font-serif-body);
+      font-style: italic;
+      font-size: 0.86rem;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 2.5rem 1rem;
+      line-height: 1.6;
+    }
+
+    /* ==========================================================================
+       DESK LAMP SWITCH & MIDNIGHT SOLITUDE MODE
+       ========================================================================== */
+    .desk-lamp-fixture {
+      position: absolute;
+      top: 1.25rem;
+      left: 1.5rem;
+      z-index: 35;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+      outline: none !important;
+      border: none !important;
+      box-shadow: none !important;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 0.2s ease, opacity 0.3s ease;
+    }
+
+    .desk-lamp-fixture:hover {
+      transform: translateY(-1px);
+    }
+
+    .desk-lamp-fixture:focus,
+    .desk-lamp-fixture:focus-visible,
+    .desk-lamp-fixture:focus-within {
+      outline: none !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+
+    .lamp-fixture-mount {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .lamp-brass-plate {
+      background: linear-gradient(135deg, #3A3124 0%, #251F16 100%);
+      border: 1px solid var(--color-aged-brass);
+      outline: 1px solid rgba(179, 148, 93, 0.22);
+      outline-offset: -3px;
+      border-radius: var(--radius-xs);
+      padding: 0.45rem 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(207, 178, 122, 0.3);
+      transition: all 0.2s ease;
+    }
+
+    .desk-lamp-fixture:hover .lamp-brass-plate {
+      border-color: var(--color-brass-bright);
+      box-shadow: 0 4px 18px var(--color-brass-glow), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .lamp-icon {
+      width: 17px;
+      height: 17px;
+      color: var(--color-brass-bright);
+      transition: transform 0.2s ease;
+    }
+
+    .lamp-plate-label {
+      font-family: var(--font-monumental);
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--color-parchment-bright);
+      text-transform: uppercase;
+    }
+
+    .lamp-pull-chain {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: -1px;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .chain-link {
+      width: 2px;
+      height: 6px;
+      background: var(--color-aged-brass);
+      margin-bottom: 2px;
+      border-radius: 1px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    }
+
+    .chain-bead {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, var(--color-brass-bright) 0%, var(--color-brass-dim) 100%);
+      border: 1px solid var(--color-brass-dark);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+    }
+
+    .desk-lamp-fixture:hover .lamp-pull-chain {
+      transform: translateY(3px);
+    }
+
+    .desk-lamp-fixture:active .lamp-pull-chain {
+      transform: translateY(8px);
+    }
+
+    /* Midnight Solitude Mode (Lamp Off) */
+    #reader-view.lamp-off .reader-topbar {
+      opacity: 0 !important;
+      pointer-events: none !important;
+      transform: translateY(-16px);
+      transition: opacity 0.45s ease, transform 0.45s ease;
+    }
+
+    #reader-view.lamp-off .reader-bottombar {
+      opacity: 0 !important;
+      pointer-events: none !important;
+      transform: translateY(16px);
+      transition: opacity 0.45s ease, transform 0.45s ease;
+    }
+
+    #reader-view.lamp-off .stage-nav-arrow {
+      opacity: 0 !important;
+      pointer-events: none !important;
+      transition: opacity 0.45s ease;
+    }
+
+    #reader-view.lamp-off .toc-drawer {
+      transform: translateX(-100%) !important;
+      pointer-events: none !important;
+    }
+
+    #reader-view.lamp-off .bookmarks-drawer {
+      transform: translateX(100%) !important;
+      pointer-events: none !important;
+    }
+
+    #reader-view.lamp-off .reader-stage {
+      background-color: #060504 !important;
+      background-image:
+        radial-gradient(ellipse 70% 60% at 50% 50%, rgba(245, 226, 185, 0.36) 0%, rgba(207, 178, 122, 0.18) 42%, rgba(24, 18, 13, 0.8) 68%, #070605 90%, #030302 100%),
+        repeating-linear-gradient(90deg, #100D0B 0px, #14110E 40px, #0E0C09 80px, #16120F 125px) !important;
+      transition: background 0.5s ease;
+    }
+
+    #reader-view.lamp-off .reader-stage::before {
+      opacity: 0.12 !important;
+      transition: opacity 0.5s ease;
+    }
+
+    #reader-view.lamp-off #flipbook-container {
+      box-shadow: 
+        0 0 70px rgba(245, 226, 185, 0.35),
+        0 0 135px rgba(179, 148, 93, 0.18),
+        0 35px 85px rgba(0, 0, 0, 0.98),
+        0 0 1px rgba(245, 226, 185, 0.4) !important;
+      transition: box-shadow 0.5s ease;
+    }
+
+    #reader-view.lamp-off #desk-lamp-switch {
+      opacity: 1 !important;
+      pointer-events: auto !important;
+      filter: drop-shadow(0 0 16px rgba(207, 178, 122, 0.9));
+      transform: none !important;
+    }
+
+    #reader-view.lamp-off #desk-lamp-switch:hover {
+      transform: translateY(-1px) !important;
+    }
+
+    #reader-view.lamp-off #desk-lamp-switch .lamp-brass-plate {
+      background: linear-gradient(135deg, #2D2418 0%, #1A150E 100%);
+      border-color: var(--color-brass-bright);
+    }
+
+    #reader-view.lamp-off #desk-lamp-switch .lamp-icon {
+      color: var(--color-brass-bright);
+      filter: drop-shadow(0 0 6px rgba(207, 178, 122, 0.9));
+    }
+
+    #reader-view.lamp-off #desk-lamp-switch .chain-bead {
+      background: radial-gradient(circle at 35% 35%, #FFE9B8 0%, var(--color-aged-brass) 100%);
+      box-shadow: 0 0 8px rgba(207, 178, 122, 0.8);
+      animation: lamp-pulse 2s infinite ease-in-out;
+    }
+
+    @keyframes lamp-pulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 8px rgba(207, 178, 122, 0.7); }
+      50% { transform: scale(1.15); box-shadow: 0 0 14px rgba(207, 178, 122, 1); }
+    }
+
   </style>
 </head>
 <body>
@@ -2068,6 +2497,24 @@
       </div>
 
       <div class="reader-top-actions">
+        <!-- Bookmark Current Folio Button -->
+        <button type="button" class="icon-btn" id="bookmark-toggle-btn" title="Bookmark Current Folio (B)" aria-label="Bookmark Current Folio">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span>Bookmark</span>
+        </button>
+
+        <!-- Bookmarked Folios Drawer Trigger -->
+        <button type="button" class="icon-btn" id="bookmarks-drawer-btn" title="View Bookmarked Folios" aria-label="View Bookmarked Folios">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path>
+            <polyline points="10 2 10 10 13 7 16 10 16 2"></polyline>
+          </svg>
+          <span>Bookmarks</span>
+          <span class="badge-count" id="bookmark-count-badge">0</span>
+        </button>
+
         <button type="button" class="icon-btn" id="download-pdf-btn" title="Save or Open Original PDF Folio" aria-label="Download Original PDF">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -2095,12 +2542,48 @@
 
     <!-- Table of Contents Drawer -->
     <aside class="toc-drawer" id="toc-drawer" aria-label="Document Outline">
-      <div class="toc-title">Folio Directory</div>
+      <div class="drawer-header">
+        <div class="toc-title">Folio Directory</div>
+        <button type="button" class="drawer-close-btn" id="close-toc-btn" aria-label="Close Contents Drawer">&#10005;</button>
+      </div>
       <ul class="toc-list" id="toc-list"></ul>
+    </aside>
+
+    <!-- Bookmarks Drawer -->
+    <aside class="bookmarks-drawer" id="bookmarks-drawer" aria-label="Bookmarked Folios">
+      <div class="drawer-header">
+        <div class="toc-title">Bookmarked Folios</div>
+        <button type="button" class="drawer-close-btn" id="close-bookmarks-btn" aria-label="Close Bookmarks Drawer">&#10005;</button>
+      </div>
+      <div class="empty-bookmarks" id="empty-bookmarks">
+        No folios bookmarked yet.<br><br>Press <kbd>B</kbd> or the ribbon icon while reading to place a bookmark.
+      </div>
+      <ul class="toc-list" id="bookmarks-list"></ul>
     </aside>
 
     <!-- Central Dark Walnut Reading Table Stage -->
     <div class="reader-stage" id="reader-stage">
+      <!-- Physical Brass Desk Lamp Switch on Table -->
+      <div class="desk-lamp-fixture" id="desk-lamp-switch" role="button" tabindex="0" title="Toggle Reading Lamp (L)" aria-label="Toggle Reading Lamp">
+        <div class="lamp-fixture-mount">
+          <div class="lamp-brass-plate">
+            <svg class="lamp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M12 2a4 4 0 0 0-4 4c0 1.6.9 3 2.2 3.7L10 13h4l-.2-3.3A4 4 0 0 0 12 2z"/>
+              <path d="M10 13v3a2 2 0 0 0 2 2 2 2 0 0 0 2-2v-3"/>
+              <path d="M9 22h6"/>
+              <line x1="12" y1="18" x2="12" y2="22"/>
+            </svg>
+            <span class="lamp-plate-label">DESK LAMP</span>
+          </div>
+          <div class="lamp-pull-chain" aria-hidden="true">
+            <span class="chain-link"></span>
+            <span class="chain-link"></span>
+            <span class="chain-link"></span>
+            <span class="chain-bead"></span>
+          </div>
+        </div>
+      </div>
+
       <button type="button" class="stage-nav-arrow stage-nav-prev" id="stage-prev-btn" title="Previous Leaf (Left Arrow)" aria-label="Previous Page">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
           <polyline points="15 18 9 12 15 6"></polyline>
@@ -2148,7 +2631,7 @@
       <!-- Center: Direct Go-To Page Form -->
       <form class="goto-form" id="goto-page-form" aria-label="Jump to specific folio">
         <label for="goto-page-input" style="font-family: var(--font-monumental); font-size: 0.74rem; letter-spacing: 0.06em; color: var(--color-parchment-dim);">Folio:</label>
-        <input type="number" id="goto-page-input" class="goto-input" min="1" max="1" placeholder="#" aria-label="Page number" />
+        <input type="number" id="goto-page-input" class="goto-input" min="1" max="1" placeholder="#" inputmode="numeric" aria-label="Page number" />
         <button type="submit" class="icon-btn" style="background: rgba(179,148,93,0.12); border-color: var(--border-medium);">Go</button>
       </form>
 
@@ -2190,6 +2673,14 @@
         <button type="button" class="icon-btn" id="close-help-btn" aria-label="Close Help Dialog">&#10005;</button>
       </div>
       <div class="shortcut-grid">
+                <div class="shortcut-row">
+          <span>Bookmark Folio</span>
+          <kbd>B</kbd>
+        </div>
+        <div class="shortcut-row">
+          <span>Toggle Reading Lamp (Midnight Solitude)</span>
+          <kbd>L</kbd>
+        </div>
         <div class="shortcut-row">
           <span>Turn Leaf Forward</span>
           <span>Click Right Page / Drag Corner / <kbd>&rarr;</kbd></span>
@@ -2278,6 +2769,8 @@
     zoomSteps: [0.75, 0.9, 1, 1.25, 1.5, 1.85, 2.25],
     isTurning: false,
     resizeTimer: null,
+    bookmarks: new Set(),
+    isLampOn: true,
     // Virtualization tuning
     RENDER_AHEAD_BUFFER: 5, // Render 5 pages before/after current spread
     MAX_CACHE_DISTANCE: 24  // Evict pages further than 24 pages away
@@ -2325,6 +2818,13 @@
     downloadPdfBtn: document.getElementById('download-pdf-btn'),
     helpModalBtn: document.getElementById('help-modal-btn'),
     closeReaderBtn: document.getElementById('close-reader-btn'),
+    bookmarkToggleBtn: document.getElementById('bookmark-toggle-btn'),
+    bookmarksDrawerBtn: document.getElementById('bookmarks-drawer-btn'),
+    bookmarksDrawer: document.getElementById('bookmarks-drawer'),
+    bookmarksList: document.getElementById('bookmarks-list'),
+    bookmarkCountBadge: document.getElementById('bookmark-count-badge'),
+    emptyBookmarks: document.getElementById('empty-bookmarks'),
+    deskLampSwitch: document.getElementById('desk-lamp-switch'),
     readerStage: document.getElementById('reader-stage'),
     bookZoomLayer: document.getElementById('book-zoom-layer'),
     get flipbookContainer() {
@@ -2433,10 +2933,200 @@
     resetFlipbookContainer();
     UI.tocList.innerHTML = '';
     UI.tocDrawer.classList.remove('open');
+    if (UI.bookmarksDrawer) UI.bookmarksDrawer.classList.remove('open');
     UI.tocToggleBtn.hidden = true;
     AppState.outlineItems = [];
     AppState.totalActualPages = 0;
     AppState.isTurning = false;
+    AppState.bookmarks.clear();
+    toggleDeskLamp(true);
+  }
+
+  // ============================================================================
+  // BOOKMARK & DESK LAMP (MIDNIGHT SOLITUDE) SYSTEMS
+  // ============================================================================
+  function getBookmarkStorageKey() {
+    const docName = AppState.selectedFile ? AppState.selectedFile.name : 'sample_folio';
+    return 'midnight_reading_room_bookmarks_' + docName;
+  }
+
+  function loadSavedBookmarks() {
+    AppState.bookmarks.clear();
+    try {
+      const saved = localStorage.getItem(getBookmarkStorageKey());
+      if (saved) {
+        const arr = JSON.parse(saved);
+        if (Array.isArray(arr)) {
+          arr.forEach(p => {
+            const num = parseInt(p, 10);
+            if (!isNaN(num) && num >= 1 && num <= AppState.totalActualPages) {
+              AppState.bookmarks.add(num);
+            }
+          });
+        }
+      }
+    } catch (_) {}
+  }
+
+  function saveBookmarksToStorage() {
+    try {
+      const arr = Array.from(AppState.bookmarks);
+      localStorage.setItem(getBookmarkStorageKey(), JSON.stringify(arr));
+    } catch (_) {}
+  }
+
+  function getCurrentVisibleFolioInfo() {
+    if (!AppState.pageFlip) return { primary: 1, all: [1] };
+    const currentIdx = AppState.pageFlip.getCurrentPageIndex();
+    const orientation = AppState.pageFlip.getOrientation();
+    const totalActual = AppState.totalActualPages;
+    const effectiveShowCover = AppState.useHardCover && totalActual > 1;
+
+    if (totalActual === 1 || orientation === 'portrait' || window.innerWidth < 768) {
+      const p = mapDomIndexToPdfPage(currentIdx) || 1;
+      return { primary: p, all: [p] };
+    }
+
+    if (effectiveShowCover && currentIdx === 0) {
+      return { primary: 1, all: [1] };
+    }
+
+    const totalDomPages = AppState.pageFlip.getPageCount();
+    if (effectiveShowCover && currentIdx >= totalDomPages - 1) {
+      return { primary: totalActual, all: [totalActual] };
+    }
+
+    const left = mapDomIndexToPdfPage(currentIdx);
+    const right = mapDomIndexToPdfPage(currentIdx + 1);
+    const all = [left, right].filter(p => p !== null && p >= 1 && p <= totalActual);
+    const primary = left || right || 1;
+    return { primary, all };
+  }
+
+  function isCurrentSpreadBookmarked() {
+    const { all } = getCurrentVisibleFolioInfo();
+    return all.some(p => AppState.bookmarks.has(p));
+  }
+
+  function toggleCurrentBookmark() {
+    if (!AppState.pageFlip) return;
+    const { primary, all } = getCurrentVisibleFolioInfo();
+    const currentlyMarked = all.find(p => AppState.bookmarks.has(p));
+
+    if (currentlyMarked) {
+      // Remove bookmark from the marked page
+      AppState.bookmarks.delete(currentlyMarked);
+      announce(`Bookmark removed from Folio ${currentlyMarked}.`);
+    } else {
+      // Add bookmark to the primary folio
+      AppState.bookmarks.add(primary);
+      announce(`Folio ${primary} bookmarked with silk ribbon.`);
+    }
+
+    saveBookmarksToStorage();
+    updateBookmarksUI();
+  }
+
+  function removeBookmark(pageNumber) {
+    if (AppState.bookmarks.has(pageNumber)) {
+      AppState.bookmarks.delete(pageNumber);
+      saveBookmarksToStorage();
+      updateBookmarksUI();
+      announce(`Bookmark removed from Folio ${pageNumber}.`);
+    }
+  }
+
+  function updateBookmarksUI() {
+    if (!UI.bookmarkCountBadge) return;
+    const count = AppState.bookmarks.size;
+    UI.bookmarkCountBadge.textContent = String(count);
+
+    const isMarked = isCurrentSpreadBookmarked();
+    if (UI.bookmarkToggleBtn) {
+      UI.bookmarkToggleBtn.classList.toggle('active', isMarked);
+      UI.bookmarkToggleBtn.title = isMarked
+        ? 'Remove Bookmark Ribbon from Folio (B)'
+        : 'Bookmark Current Folio with Ribbon (B)';
+      UI.bookmarkToggleBtn.setAttribute('aria-pressed', isMarked ? 'true' : 'false');
+    }
+
+    // Update physical ribbon markers on page DOM elements
+    for (const [pageNum, imgEl] of AppState.pageElements.entries()) {
+      const pageDiv = imgEl.closest('.flip-page');
+      if (pageDiv) {
+        pageDiv.classList.toggle('has-bookmark', AppState.bookmarks.has(pageNum));
+      }
+    }
+
+    // Update bookmarks drawer listing
+    if (UI.bookmarksList && UI.emptyBookmarks) {
+      if (count === 0) {
+        UI.emptyBookmarks.style.display = 'block';
+        UI.bookmarksList.innerHTML = '';
+      } else {
+        UI.emptyBookmarks.style.display = 'none';
+        UI.bookmarksList.innerHTML = '';
+        const sorted = Array.from(AppState.bookmarks).sort((a, b) => a - b);
+        sorted.forEach(pageNum => {
+          const li = document.createElement('li');
+          li.className = 'bookmark-item-row';
+
+          const jumpBtn = document.createElement('button');
+          jumpBtn.type = 'button';
+          jumpBtn.className = 'bookmark-jump-btn';
+          jumpBtn.innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span>Folio ${pageNum}</span>
+          `;
+          jumpBtn.addEventListener('click', () => {
+            jumpToPdfPage(pageNum);
+            if (UI.bookmarksDrawer) UI.bookmarksDrawer.classList.remove('open');
+          });
+
+          const delBtn = document.createElement('button');
+          delBtn.type = 'button';
+          delBtn.className = 'bookmark-delete-btn';
+          delBtn.title = `Remove bookmark from Folio ${pageNum}`;
+          delBtn.setAttribute('aria-label', `Remove bookmark from Folio ${pageNum}`);
+          delBtn.innerHTML = '&#10005;';
+          delBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            removeBookmark(pageNum);
+          });
+
+          li.appendChild(jumpBtn);
+          li.appendChild(delBtn);
+          UI.bookmarksList.appendChild(li);
+        });
+      }
+    }
+  }
+
+  function toggleDeskLamp(forcedState) {
+    const nextState = typeof forcedState === 'boolean' ? forcedState : !AppState.isLampOn;
+    AppState.isLampOn = nextState;
+
+    if (UI.readerView) {
+      UI.readerView.classList.toggle('lamp-off', !nextState);
+    }
+
+    if (UI.deskLampSwitch) {
+      UI.deskLampSwitch.title = nextState
+        ? 'Turn Off Reading Lamp — Midnight Solitude (L)'
+        : 'Turn On Reading Lamp (L)';
+      UI.deskLampSwitch.blur();
+    }
+
+    if (!nextState) {
+      // Close all drawers when going dark
+      if (UI.tocDrawer) UI.tocDrawer.classList.remove('open');
+      if (UI.bookmarksDrawer) UI.bookmarksDrawer.classList.remove('open');
+      announce('Desk lamp turned off. The reading desk is submerged in midnight darkness, illuminating only the book.');
+    } else {
+      announce('Desk lamp illuminated. Reading desk controls restored.');
+    }
   }
 
   function validatePdfFile(file) {
@@ -2959,7 +3649,10 @@
     UI.downloadPdfBtn.style.display = AppState.originalFileUrl ? 'inline-flex' : 'none';
 
     AppState.zoomLevel = 1;
+    loadSavedBookmarks();
+    toggleDeskLamp(true);
     buildFlipbookInstance(0);
+    updateBookmarksUI();
     announce(`Flipbook ready with ${AppState.totalActualPages} pages.`);
   }
 
@@ -3020,6 +3713,10 @@
       img.src = (cached && cached.url) ? cached.url : BLANK_PAPER;
       img.alt = pdfPageNumber ? `PDF Page ${pdfPageNumber}` : 'Blank backing leaf';
       pageDiv.appendChild(img);
+
+      if (pdfPageNumber && AppState.bookmarks.has(pdfPageNumber)) {
+        pageDiv.classList.add('has-bookmark');
+      }
 
       if (pdfPageNumber) {
         AppState.pageElements.set(pdfPageNumber, img);
@@ -3152,6 +3849,7 @@
     }
 
     UI.pageIndicator.textContent = label;
+    updateBookmarksUI();
 
     const isAtStart = currentIdx <= 0;
     const isAtEnd = currentIdx >= totalDomPages - 1 ||
@@ -3333,6 +4031,13 @@
     UI.gotoForm.addEventListener('submit', (e) => {
       e.preventDefault();
       jumpToPdfPage(UI.gotoInput.value);
+      if (UI.gotoInput) UI.gotoInput.blur();
+    });
+    UI.pageIndicator.addEventListener('click', () => {
+      if (UI.gotoInput) {
+        UI.gotoInput.focus();
+        UI.gotoInput.select();
+      }
     });
 
     UI.zoomInBtn.addEventListener('click', zoomIn);
@@ -3475,7 +4180,62 @@
       }
     }, { passive: true });
 
-    UI.tocToggleBtn.addEventListener('click', () => UI.tocDrawer.classList.toggle('open'));
+    // Bookmarks and Reading Lamp Events
+
+    if (UI.deskLampSwitch) {
+      UI.deskLampSwitch.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleDeskLamp();
+        UI.deskLampSwitch.blur();
+      });
+      UI.deskLampSwitch.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggleDeskLamp();
+          UI.deskLampSwitch.blur();
+        }
+      });
+    }
+
+    if (UI.bookmarkToggleBtn) {
+      UI.bookmarkToggleBtn.addEventListener('click', toggleCurrentBookmark);
+    }
+    if (UI.bookmarksDrawerBtn) {
+      UI.bookmarksDrawerBtn.addEventListener('click', () => {
+        if (UI.tocDrawer) UI.tocDrawer.classList.remove('open');
+        if (UI.bookmarksDrawer) UI.bookmarksDrawer.classList.toggle('open');
+      });
+    }
+
+    const closeBookmarksBtn = document.getElementById('close-bookmarks-btn');
+    if (closeBookmarksBtn) {
+      closeBookmarksBtn.addEventListener('click', () => {
+        if (UI.bookmarksDrawer) UI.bookmarksDrawer.classList.remove('open');
+      });
+    }
+
+    const closeTocBtn = document.getElementById('close-toc-btn');
+    if (closeTocBtn) {
+      closeTocBtn.addEventListener('click', () => {
+        if (UI.tocDrawer) UI.tocDrawer.classList.remove('open');
+      });
+    }
+
+    UI.tocToggleBtn.addEventListener('click', () => {
+      if (UI.bookmarksDrawer) UI.bookmarksDrawer.classList.remove('open');
+      UI.tocDrawer.classList.toggle('open');
+    });
+
+    // Close open drawers when clicking on the reading table outside
+    UI.readerStage.addEventListener('click', (e) => {
+      if (e.target.closest('#desk-lamp-switch') || e.target.closest('.stage-nav-arrow')) return;
+      if (UI.tocDrawer && UI.tocDrawer.classList.contains('open')) {
+        UI.tocDrawer.classList.remove('open');
+      }
+      if (UI.bookmarksDrawer && UI.bookmarksDrawer.classList.contains('open')) {
+        UI.bookmarksDrawer.classList.remove('open');
+      }
+    });
     UI.downloadPdfBtn.addEventListener('click', () => {
       if (!AppState.originalFileUrl) return;
       const a = document.createElement('a');
@@ -3506,13 +4266,27 @@
       const tag = document.activeElement?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA') return;
 
-      if (e.key === 'ArrowRight') { e.preventDefault(); turnNext(); }
+      if (e.key === 'b' || e.key === 'B') {
+        if (!e.ctrlKey && !e.metaKey) { e.preventDefault(); toggleCurrentBookmark(); }
+      }
+      else if (e.key === 'l' || e.key === 'L') {
+        if (!e.ctrlKey && !e.metaKey) { e.preventDefault(); toggleDeskLamp(); }
+      }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); turnNext(); }
       else if (e.key === 'ArrowLeft') { e.preventDefault(); turnPrev(); }
       else if (e.key === 'Home') { e.preventDefault(); jumpToPdfPage(1); }
       else if (e.key === 'End') { e.preventDefault(); jumpToPdfPage(AppState.totalActualPages); }
       else if (e.key === '+' || e.key === '=') { e.preventDefault(); zoomIn(); }
       else if (e.key === '-') { e.preventDefault(); zoomOut(); }
       else if (e.key === '0') { e.preventDefault(); resetZoom(); }
+      else if (e.key === 'Escape') {
+        if (UI.tocDrawer && UI.tocDrawer.classList.contains('open')) {
+          UI.tocDrawer.classList.remove('open');
+        }
+        if (UI.bookmarksDrawer && UI.bookmarksDrawer.classList.contains('open')) {
+          UI.bookmarksDrawer.classList.remove('open');
+        }
+      }
       else if (e.key === 'f' || e.key === 'F') {
         if (!e.ctrlKey && !e.metaKey) { e.preventDefault(); toggleFullScreen(); }
       }
