@@ -439,6 +439,7 @@
       position: relative;
       background: #FAF6ED;
       color: #29251F;
+      overflow: hidden;
     }
 
     .sample-page-left {
@@ -468,9 +469,11 @@
       justify-content: space-between;
       transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
       pointer-events: none;
+      overflow: hidden;
     }
 
-    .book-showcase:hover .sample-turning-leaf {
+    .book-showcase:hover .sample-turning-leaf,
+    .book-showcase.leaf-turned .sample-turning-leaf {
       transform: rotateY(-52deg);
     }
 
@@ -1682,6 +1685,130 @@
     @media (max-width: 640px) {
       .navbar { padding: 1.15rem 1.25rem; }
       .features-section { grid-template-columns: 1fr; }
+
+      /* Hero Section & Demo Book Mobile Formatting */
+      .hero {
+        padding: 2.25rem 1rem 2.5rem;
+        gap: 2rem;
+      }
+      .hero-title {
+        font-size: clamp(1.85rem, 6.8vw, 2.35rem);
+        margin-bottom: 1rem;
+      }
+      .hero-subtitle {
+        font-size: 0.92rem;
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+      }
+      .archival-tag {
+        font-size: 0.64rem;
+        padding: 0.28rem 0.65rem;
+        margin-bottom: 1rem;
+      }
+
+      /* Demo Book Showcase Mobile Refinements */
+      .book-showcase {
+        padding: 1.35rem 0.85rem 1.1rem;
+        width: 100%;
+        box-sizing: border-box;
+        cursor: pointer;
+      }
+      .antique-bookstand {
+        max-width: 340px;
+        width: 100%;
+        margin: 0 auto;
+        perspective: 900px;
+      }
+      .sample-book-3d {
+        aspect-ratio: 1.36 / 1;
+        min-height: 195px;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.85);
+      }
+      .sample-book-3d::after {
+        width: 6px;
+        height: 106%;
+      }
+      .sample-page {
+        padding: 0.75rem 0.6rem 0.6rem;
+        overflow: hidden;
+      }
+      .sample-turning-leaf {
+        padding: 0.75rem 0.6rem 0.6rem;
+        overflow: hidden;
+        transform: rotateY(-20deg);
+        box-shadow: -8px 5px 18px rgba(0, 0, 0, 0.55);
+      }
+      .book-showcase:hover .sample-turning-leaf,
+      .book-showcase.leaf-turned .sample-turning-leaf {
+        transform: rotateY(-48deg);
+      }
+
+      .mock-header-flourish {
+        font-size: 0.52rem;
+        margin-bottom: 0.18rem;
+      }
+      .mock-book-title {
+        font-size: 0.65rem;
+        margin-bottom: 0.18rem;
+        letter-spacing: 0.03em;
+      }
+      .mock-book-rule {
+        margin: 0 auto 0.35rem;
+        width: 65%;
+      }
+      .mock-paragraph {
+        gap: 0.3rem;
+        margin-bottom: 0.22rem;
+      }
+      .mock-dropcap {
+        font-size: 1.25rem;
+        line-height: 0.85;
+      }
+      .mock-line {
+        height: 3px;
+        margin-bottom: 4px;
+      }
+      .mock-line.short {
+        width: 55%;
+      }
+      .mock-plate-crest {
+        height: 28px;
+        margin: 0.3rem 0;
+        font-size: 0.52rem;
+        letter-spacing: 0.04em;
+        gap: 0.25rem;
+        padding: 0 0.25rem;
+      }
+      .mock-plate-crest svg {
+        width: 11px;
+        height: 11px;
+        flex-shrink: 0;
+      }
+      .mock-quote-box {
+        font-size: 0.56rem;
+        line-height: 1.35;
+        padding: 0.25rem 0.4rem;
+        margin: 0.3rem 0;
+      }
+      .mock-folio-num {
+        font-size: 0.52rem;
+        letter-spacing: 0.04em;
+      }
+
+      .showcase-caption {
+        margin-top: 0.9rem;
+        padding-top: 0.65rem;
+        flex-direction: column;
+        gap: 0.35rem;
+        text-align: center;
+        font-size: 0.66rem;
+      }
+      .showcase-caption-action {
+        font-size: 0.7rem;
+        color: var(--color-brass-bright);
+        font-weight: 500;
+      }
+
       .stage-nav-arrow { display: none !important; }
 
       /* Topbar Responsive Optimization */
@@ -2314,7 +2441,7 @@
           </div>
           <div class="showcase-caption">
             <span>Dual-Folio Spread • Central Crease Depth • Silk Ribbon Marker</span>
-            <span class="showcase-caption-action">Hover to Turn Leaf ➔</span>
+            <span class="showcase-caption-action">Tap or Hover to Turn Leaf ➔</span>
           </div>
         </div>
       </section>
@@ -2744,6 +2871,42 @@
       this.render = null;
       this.flipController = null;
       this.ui = null;
+    };
+
+    // Patch loadFromHTML to tune drag sensitivity and page flip threshold:
+    // StPageFlip's default stopMove() requires dragging pos.x <= 0 (all the way past the central spine,
+    // which is 50% of the entire spread or 100% of single page width). On mobile touchscreens,
+    // this makes page dragging frustrating.
+    // By tuning the threshold to bounds.pageWidth * 0.65 on mobile (0.5 on desktop),
+    // dragging just 35% of the page triggers a smooth completed flip!
+    const origLoadFromHTML = window.St.PageFlip.prototype.loadFromHTML;
+    window.St.PageFlip.prototype.loadFromHTML = function (items) {
+      const res = origLoadFromHTML.call(this, items);
+      if (this.flipController) {
+        const proto = Object.getPrototypeOf(this.flipController);
+        if (proto && !proto.__stopMoveCustomized) {
+          proto.__stopMoveCustomized = true;
+          proto.stopMove = function () {
+            if (null === this.calc) return;
+            const pos = this.calc.getPosition();
+            const bounds = this.getBoundsRect();
+            const cornerY = 'bottom' === this.calc.getCorner() ? bounds.height : 0;
+            const isMobile = window.innerWidth <= 768;
+            const threshold = isMobile ? bounds.pageWidth * 0.65 : bounds.pageWidth * 0.5;
+            if (pos.x <= threshold) {
+              this.animateFlippingTo(pos, { x: -bounds.pageWidth, y: cornerY }, true);
+            } else {
+              this.animateFlippingTo(pos, { x: bounds.pageWidth, y: cornerY }, false);
+            }
+          };
+        }
+      }
+      if (this.ui) {
+        // Increase touch swipe time window so natural mobile swipes register easily
+        this.ui.swipeTimeout = 500;
+        this.ui.swipeDistance = 15;
+      }
+      return res;
     };
   }
 
@@ -3753,7 +3916,7 @@
       usePortrait: isSinglePageViewport,
       startPage: startPageIndex,
       flippingTime: reducedMotion ? 120 : 680,
-      swipeDistance: 20,
+      swipeDistance: 15,
       mobileScrollSupport: false,
       clickEventForward: true,
       showPageCorners: true
@@ -3991,6 +4154,12 @@
   function bindEvents() {
     UI.heroCreateBtn.addEventListener('click', () => UI.fileInput.click());
     UI.trySampleBtn.addEventListener('click', generateSampleBooklet);
+    const bookShowcase = document.querySelector('.book-showcase');
+    if (bookShowcase) {
+      bookShowcase.addEventListener('click', () => {
+        bookShowcase.classList.toggle('leaf-turned');
+      });
+    }
     UI.choosePdfBtn.addEventListener('click', (e) => { e.stopPropagation(); UI.fileInput.click(); });
     UI.fileInput.addEventListener('change', (e) => {
       if (e.target.files && e.target.files[0]) handleFileSelection(e.target.files[0]);
