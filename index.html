@@ -870,6 +870,7 @@
       align-items: center;
       gap: 0.75rem;
       min-width: 0;
+      flex: 1;
     }
 
     .reader-doc-title {
@@ -880,6 +881,8 @@
       overflow: hidden;
       text-overflow: ellipsis;
       max-width: 380px;
+      flex-shrink: 1;
+      min-width: 0;
       color: var(--text-primary);
     }
 
@@ -949,7 +952,7 @@
       background: radial-gradient(circle at center, #141E16 0%, #0B0F0C 100%);
       user-select: none;
       -webkit-user-select: none;
-      touch-action: pan-x pan-y;
+      touch-action: none;
     }
 
     .reader-stage.zoomed {
@@ -957,6 +960,7 @@
       cursor: grab;
       scrollbar-width: thin;
       scrollbar-color: var(--border-hover) var(--bg-base);
+      touch-action: pan-x pan-y;
     }
 
     .reader-stage.zoomed:active {
@@ -1341,16 +1345,94 @@
       .navbar { padding: 1rem 1.25rem; }
       .badge-privacy { display: none; }
       .features-section { grid-template-columns: 1fr; }
-      .stage-nav-arrow { display: none; }
-      .reader-doc-title { max-width: 140px; }
-      .reader-bottombar {
+      .stage-nav-arrow { display: none !important; }
+
+      /* 1. Topbar Responsive Optimization: Zero Overlap */
+      .reader-topbar {
+        height: 48px;
         padding: 0 0.65rem;
-        overflow-x: auto;
+        gap: 0.5rem;
+      }
+      .reader-doc-info {
+        gap: 0.45rem;
+        min-width: 0;
+        flex: 1;
+      }
+      .reader-doc-title {
+        font-size: 0.8rem;
+        max-width: 140px;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .reader-badge {
+        font-size: 0.68rem;
+        padding: 0.15rem 0.4rem;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .reader-top-actions {
+        gap: 0.35rem;
+        flex-shrink: 0;
+      }
+      .reader-top-actions .icon-btn,
+      .reader-doc-info .icon-btn {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .reader-top-actions .icon-btn span,
+      .reader-doc-info .icon-btn span {
+        display: none !important;
+      }
+
+      /* 2. Bottombar Compact Layout: Zero Sideways Scroll */
+      .reader-bottombar {
+        height: 48px;
+        padding: 0 0.5rem;
+        overflow: hidden !important;
+        justify-content: space-between;
+        gap: 0.35rem;
+      }
+      .reader-bottombar .toolbar-group {
+        gap: 0.25rem;
+      }
+      .reader-bottombar .icon-btn {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .reader-bottombar .icon-btn span:not(.zoom-readout) {
+        display: none !important;
       }
       .page-indicator-pill {
-        min-width: 110px;
-        font-size: 0.75rem;
-        padding: 0.3rem 0.5rem;
+        min-width: 75px;
+        font-size: 0.72rem;
+        padding: 0.25rem 0.45rem;
+        white-space: nowrap;
+      }
+      .goto-form {
+        display: none !important;
+      }
+      .zoom-readout {
+        display: none !important;
+      }
+      #zoom-out-btn,
+      #zoom-in-btn {
+        display: none !important;
+      }
+
+      /* 3. Touch Optimization */
+      .reader-stage:not(.zoomed),
+      .reader-stage:not(.zoomed) #flipbook-container,
+      .reader-stage:not(.zoomed) .stf__parent,
+      .reader-stage:not(.zoomed) .stf__wrapper {
+        touch-action: none !important;
       }
     }
   </style>
@@ -2302,16 +2384,16 @@
     UI.gotoInput.value = '';
     UI.downloadPdfBtn.style.display = AppState.originalFileUrl ? 'inline-flex' : 'none';
 
-    resetZoom();
+    AppState.zoomLevel = 1;
     buildFlipbookInstance(0);
     announce(`Flipbook ready with ${AppState.totalActualPages} pages.`);
   }
 
   function calculateOptimalPageSize(pageAspectRatio) {
     const stageRect = UI.readerStage.getBoundingClientRect();
-    const availW = Math.max(280, stageRect.width - 64);
-    const availH = Math.max(320, stageRect.height - 32);
     const isSinglePageViewport = window.innerWidth < 768 || AppState.totalActualPages === 1;
+    const availW = isSinglePageViewport ? Math.max(260, stageRect.width - 20) : Math.max(280, stageRect.width - 64);
+    const availH = isSinglePageViewport ? Math.max(300, stageRect.height - 20) : Math.max(320, stageRect.height - 32);
 
     let pageH = availH;
     let pageW = pageH * pageAspectRatio;
@@ -2338,6 +2420,16 @@
     AppState.pageElements.clear();
 
     const { width, height, isSinglePageViewport } = calculateOptimalPageSize(AppState.defaultAspectRatio);
+    AppState.baseBookWidth = width * (isSinglePageViewport ? 1 : 2);
+    AppState.baseBookHeight = height;
+
+    // Explicitly size container and book zoom layer BEFORE StPageFlip initializes
+    // so calculateBoundsRect() inside StPageFlip computes exact, non-offset bounds.
+    container.style.width = `${AppState.baseBookWidth}px`;
+    container.style.height = `${AppState.baseBookHeight}px`;
+    UI.bookZoomLayer.style.width = `${AppState.baseBookWidth}px`;
+    UI.bookZoomLayer.style.height = `${AppState.baseBookHeight}px`;
+
     const totalActual = AppState.totalActualPages;
     const effectiveShowCover = AppState.useHardCover && totalActual > 1;
     const needsBlankLeaf = effectiveShowCover && totalActual > 1 && totalActual % 2 !== 0;
@@ -2388,18 +2480,29 @@
       usePortrait: isSinglePageViewport,
       startPage: startPageIndex,
       flippingTime: reducedMotion ? 120 : 680,
-      swipeDistance: 30,
+      swipeDistance: 20,
+      mobileScrollSupport: false,
+      clickEventForward: true,
       showPageCorners: true
     });
 
     AppState.pageFlip.loadFromHTML(container.querySelectorAll('.flip-page'));
 
+    // Re-synchronize render bounds and frame
+    if (AppState.pageFlip.getRender()) {
+      try {
+        AppState.pageFlip.getRender().update();
+        AppState.pageFlip.getRender().drawFrame();
+      } catch (_) {}
+    }
+
     AppState.pageFlip.on('flip', () => {
+      AppState.isTurning = false;
       updateNavigationState();
     });
 
     AppState.pageFlip.on('changeState', (e) => {
-      AppState.isTurning = e.data === 'flipping';
+      AppState.isTurning = e.data === 'flipping' || e.data === 'user_fold';
       if (e.data === 'user_fold' || e.data === 'flipping') {
         const container = UI.flipbookContainer;
         if (container) {
@@ -2409,14 +2512,12 @@
         const currentPdfPage = mapDomIndexToPdfPage(currentIdx) || 1;
         updateSlidingWindowCache(currentPdfPage);
       } else if (e.data === 'read') {
+        AppState.isTurning = false;
         updateNavigationState();
       }
     });
 
-    AppState.baseBookWidth = width * (isSinglePageViewport ? 1 : 2);
-    AppState.baseBookHeight = height;
     applyZoom(AppState.zoomLevel || 1);
-
     updateNavigationState();
   }
 
@@ -2673,33 +2774,31 @@
       }
     }, { passive: false });
 
-    // Drag-to-pan navigation when zoomed in
+    // Drag-to-pan navigation when zoomed in (Mouse and Touch)
     let isPanning = false;
     let panStartX = 0;
     let panStartY = 0;
     let panScrollLeft = 0;
     let panScrollTop = 0;
 
-    UI.readerStage.addEventListener('mousedown', (e) => {
-      if (AppState.zoomLevel <= 1 || e.button !== 0) return;
-      if (e.target.closest('.stage-nav-arrow') || e.target.closest('button') || e.target.closest('a')) return;
-
+    const startPan = (clientX, clientY, target) => {
+      if (AppState.zoomLevel <= 1) return;
+      if (target.closest('.stage-nav-arrow') || target.closest('button') || target.closest('a') || target.closest('input')) return;
       isPanning = true;
-      panStartX = e.clientX;
-      panStartY = e.clientY;
+      panStartX = clientX;
+      panStartY = clientY;
       panScrollLeft = UI.readerStage.scrollLeft;
       panScrollTop = UI.readerStage.scrollTop;
       UI.readerStage.style.cursor = 'grabbing';
-      e.preventDefault();
-    });
+    };
 
-    window.addEventListener('mousemove', (e) => {
+    const movePan = (clientX, clientY) => {
       if (!isPanning) return;
-      const dx = e.clientX - panStartX;
-      const dy = e.clientY - panStartY;
+      const dx = clientX - panStartX;
+      const dy = clientY - panStartY;
       UI.readerStage.scrollLeft = panScrollLeft - dx;
       UI.readerStage.scrollTop = panScrollTop - dy;
-    });
+    };
 
     const stopPan = () => {
       if (!isPanning) return;
@@ -2707,8 +2806,100 @@
       UI.readerStage.style.cursor = AppState.zoomLevel > 1 ? 'grab' : '';
     };
 
+    UI.readerStage.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      startPan(e.clientX, e.clientY, e.target);
+      if (isPanning) e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isPanning) return;
+      movePan(e.clientX, e.clientY);
+    });
+
     window.addEventListener('mouseup', stopPan);
     window.addEventListener('blur', stopPan);
+
+    UI.readerStage.addEventListener('touchstart', (e) => {
+      if (AppState.zoomLevel > 1 && e.touches.length === 1) {
+        startPan(e.touches[0].clientX, e.touches[0].clientY, e.target);
+      }
+    }, { passive: true });
+
+    UI.readerStage.addEventListener('touchmove', (e) => {
+      if (AppState.zoomLevel > 1 && isPanning && e.touches.length === 1) {
+        movePan(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    }, { passive: true });
+
+    UI.readerStage.addEventListener('touchend', stopPan, { passive: true });
+    UI.readerStage.addEventListener('touchcancel', stopPan, { passive: true });
+
+    // Mobile Touch Gesture Support (Horizontal Swipe & Outer Margin Tap when zoomLevel <= 1)
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchStartTime = 0;
+    let touchMoved = false;
+
+    UI.readerStage.addEventListener('touchstart', (e) => {
+      if (AppState.zoomLevel > 1) return;
+      if (e.touches.length === 1) {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        touchStartTime = Date.now();
+        touchMoved = false;
+      }
+    }, { passive: true });
+
+    UI.readerStage.addEventListener('touchmove', (e) => {
+      if (AppState.zoomLevel > 1 || e.touches.length !== 1) return;
+      const dx = e.touches[0].clientX - touchStartX;
+      const dy = e.touches[0].clientY - touchStartY;
+      if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+        touchMoved = true;
+      }
+    }, { passive: true });
+
+    UI.readerStage.addEventListener('touchend', (e) => {
+      if (AppState.zoomLevel > 1) return;
+      if (AppState.isTurning || !AppState.pageFlip) return;
+      if (e.changedTouches.length !== 1) return;
+
+      const touchEndX = e.changedTouches[0].clientX;
+      const touchEndY = e.changedTouches[0].clientY;
+      const deltaX = touchEndX - touchStartX;
+      const deltaY = touchEndY - touchStartY;
+      const elapsed = Date.now() - touchStartTime;
+
+      // Horizontal swipe detection: threshold 35px, predominantly horizontal, under 600ms
+      if (Math.abs(deltaX) > 35 && Math.abs(deltaX) > Math.abs(deltaY) * 1.25 && elapsed < 600) {
+        if (deltaX < 0) {
+          turnNext();
+        } else {
+          turnPrev();
+        }
+        return;
+      }
+
+      // Quick tap detection on outer margins (left 22% or right 22% of the flipbook)
+      if (!touchMoved && elapsed < 350) {
+        const target = e.target;
+        if (target.closest('button') || target.closest('a') || target.closest('input')) return;
+        const container = UI.flipbookContainer;
+        if (container) {
+          const rect = container.getBoundingClientRect();
+          if (rect.width > 0 && touchEndX >= rect.left && touchEndX <= rect.right &&
+              touchEndY >= rect.top && touchEndY <= rect.bottom) {
+            const relX = (touchEndX - rect.left) / rect.width;
+            if (relX < 0.22) {
+              turnPrev();
+            } else if (relX > 0.78) {
+              turnNext();
+            }
+          }
+        }
+      }
+    }, { passive: true });
 
     UI.tocToggleBtn.addEventListener('click', () => UI.tocDrawer.classList.toggle('open'));
     UI.downloadPdfBtn.addEventListener('click', () => {
