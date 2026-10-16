@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-  <title>FlipBook — Interactive PDF-to-3D Flipbook Reader</title>
+  <title>The Midnight Reading Room — Interactive Archival Flipbook</title>
   
-  <!-- Google Fonts: Pixel Display (Silkscreen), Editorial Sans (Inter), Technical Monospace (Space Mono) -->
+  <!-- Typography: Cormorant Garamond (Editorial Serif), Libre Baskerville (Body), Cinzel (Monumental Small-Caps), Space Mono (Numerals) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Silkscreen:wght@400;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 
   <!-- PDF.js (Stable v3.11.174) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -16,44 +16,84 @@
   <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
 
   <style>
+    /* ==========================================================================
+       THE MIDNIGHT READING ROOM — DESIGN SYSTEM & TOKENS
+       ========================================================================== */
     :root {
-      --bg-base: #0B0F0C;
-      --bg-surface: #121A14;
-      --bg-elevated: #18221A;
-      --bg-elevated-hover: #202D23;
-      --border-subtle: #2B3A2E;
-      --border-hover: #3E5442;
-      --border-accent: #668B6B;
+      /* Core Palette */
+      --color-smoked-ebony: #191714;
+      --color-dark-walnut: #29251F;
+      --color-walnut-surface: #221F1A;
+      --color-walnut-elevated: #322C24;
+      --color-walnut-highlight: #3F372E;
+      --color-walnut-border: #4A3F33;
       
-      --accent: #668B6B;
-      --accent-hover: #79A07E;
-      --accent-active: #91B295;
-      --accent-subtle: rgba(102, 139, 107, 0.12);
-      --accent-glow: rgba(145, 178, 149, 0.2);
+      --color-library-green: #263D30;
+      --color-library-green-dark: #1A2B22;
+      --color-library-green-hover: #324F3F;
+      --color-library-green-light: #3E624E;
+      --color-library-green-subtle: rgba(38, 61, 48, 0.45);
       
-      --text-primary: #E0E6DC;
-      --text-secondary: #AAB5AB;
-      --text-muted: #829184;
+      --color-oxblood: #754039;
+      --color-oxblood-dark: #562E29;
+      --color-oxblood-hover: #8D4D44;
+      --color-oxblood-subtle: rgba(117, 64, 57, 0.22);
       
-      --error-bg: rgba(217, 107, 107, 0.12);
-      --error-border: #5C2828;
-      --error-text: #E58A8A;
+      --color-aged-brass: #B3945D;
+      --color-brass-bright: #CFB27A;
+      --color-brass-dim: #8A6F40;
+      --color-brass-dark: #584526;
+      --color-brass-subtle: rgba(179, 148, 93, 0.14);
+      --color-brass-glow: rgba(207, 178, 122, 0.22);
       
-      --warn-bg: rgba(212, 163, 89, 0.12);
-      --warn-border: #543F1E;
-      --warn-text: #DFC183;
+      --color-aged-parchment: #D8C8A8;
+      --color-parchment-bright: #EDE4CE;
+      --color-parchment-dim: #B8A88A;
+      --color-parchment-muted: #8E8268;
       
-      --radius-xs: 3px;
+      /* Semantic Tokens */
+      --bg-base: var(--color-smoked-ebony);
+      --bg-surface: var(--color-dark-walnut);
+      --bg-elevated: var(--color-walnut-elevated);
+      --bg-elevated-hover: var(--color-walnut-highlight);
+      
+      --border-subtle: rgba(179, 148, 93, 0.22);
+      --border-medium: rgba(179, 148, 93, 0.4);
+      --border-ornament: var(--color-aged-brass);
+      --border-hover: var(--color-brass-bright);
+      
+      --accent: var(--color-library-green);
+      --accent-hover: var(--color-library-green-hover);
+      --accent-active: var(--color-library-green-light);
+      --accent-subtle: var(--color-library-green-subtle);
+      --accent-glow: rgba(62, 98, 78, 0.35);
+      
+      --text-primary: var(--color-aged-parchment);
+      --text-secondary: var(--color-parchment-dim);
+      --text-muted: var(--color-parchment-muted);
+      --text-brass: var(--color-brass-bright);
+      
+      --error-bg: var(--color-oxblood-subtle);
+      --error-border: var(--color-oxblood);
+      --error-text: #E8A8A0;
+      
+      --warn-bg: rgba(179, 148, 93, 0.12);
+      --warn-border: var(--color-brass-dim);
+      --warn-text: var(--color-brass-bright);
+      
+      --radius-xs: 2px;
       --radius-sm: 4px;
       --radius-md: 6px;
       --radius-lg: 8px;
       
-      --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.45);
-      --shadow-book: 0 28px 65px rgba(0, 0, 0, 0.85), 0 8px 24px rgba(0, 0, 0, 0.55);
+      --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.4);
+      --shadow-book: 0 35px 80px rgba(0, 0, 0, 0.88), 0 12px 32px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(179, 148, 93, 0.2);
+      --shadow-leather: inset 0 0 0 1px rgba(179, 148, 93, 0.25), inset 0 0 40px rgba(0, 0, 0, 0.5), 0 16px 36px rgba(0, 0, 0, 0.7);
       
-      --font-pixel: 'Silkscreen', monospace;
-      --font-mono: 'Space Mono', 'JetBrains Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-serif-display: 'Cormorant Garamond', Garamond, 'Georgia', serif;
+      --font-serif-body: 'Libre Baskerville', 'Baskerville', 'Times New Roman', serif;
+      --font-monumental: 'Cinzel', 'Trajan Pro', 'Cormorant Garamond', serif;
+      --font-mono: 'Space Mono', 'Courier New', monospace;
     }
 
     * {
@@ -66,11 +106,14 @@
       height: 100%;
       background-color: var(--bg-base);
       color: var(--text-primary);
-      font-family: var(--font-sans);
+      font-family: var(--font-serif-body);
       -webkit-font-smoothing: antialiased;
       overflow-x: hidden;
-      background-image: radial-gradient(rgba(43, 58, 46, 0.35) 1px, transparent 1px);
-      background-size: 24px 24px;
+      background-image: 
+        radial-gradient(ellipse at 50% 0%, rgba(38, 61, 48, 0.15) 0%, transparent 60%),
+        radial-gradient(ellipse at 85% 20%, rgba(179, 148, 93, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(179, 148, 93, 0.035) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 32px 32px;
     }
 
     body.reader-mode {
@@ -82,7 +125,7 @@
 
     /* Accessibility Focus */
     :focus-visible {
-      outline: 2px solid var(--accent-active);
+      outline: 2px solid var(--color-aged-brass);
       outline-offset: 2px;
     }
 
@@ -98,7 +141,7 @@
       border: 0;
     }
 
-    /* Custom Sleek Dark Scrollbar */
+    /* Antique Dark Scrollbar */
     ::-webkit-scrollbar {
       width: 8px;
       height: 8px;
@@ -107,11 +150,12 @@
       background: var(--bg-base);
     }
     ::-webkit-scrollbar-thumb {
-      background: var(--border-subtle);
+      background: var(--color-walnut-border);
       border-radius: var(--radius-xs);
+      border: 1px solid rgba(179, 148, 93, 0.15);
     }
     ::-webkit-scrollbar-thumb:hover {
-      background: var(--border-hover);
+      background: var(--color-brass-dim);
     }
 
     /* Buttons */
@@ -120,66 +164,77 @@
       align-items: center;
       justify-content: center;
       gap: 0.55rem;
-      font-family: var(--font-mono);
-      font-size: 0.85rem;
-      font-weight: 500;
-      letter-spacing: 0.02em;
-      padding: 0.65rem 1.35rem;
-      border-radius: var(--radius-sm);
+      font-family: var(--font-monumental);
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 0.72rem 1.45rem;
+      border-radius: var(--radius-xs);
       border: 1px solid transparent;
       cursor: pointer;
-      transition: all 0.18s ease;
+      transition: all 0.2s ease;
       text-decoration: none;
       user-select: none;
+      position: relative;
     }
 
     .btn:disabled {
-      opacity: 0.4;
+      opacity: 0.38;
       cursor: not-allowed;
+      filter: grayscale(40%);
+    }
+
+    .btn:active:not(:disabled) {
+      transform: translateY(1px);
     }
 
     .btn-primary {
-      background-color: var(--accent);
-      color: #0B0F0C;
-      font-weight: 700;
-      border-color: var(--accent);
+      background: linear-gradient(180deg, var(--color-library-green-hover) 0%, var(--color-library-green) 100%);
+      color: var(--color-parchment-bright);
+      border-color: var(--color-aged-brass);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(207, 178, 122, 0.3);
     }
 
     .btn-primary:hover:not(:disabled) {
-      background-color: var(--accent-active);
-      border-color: var(--accent-active);
-      box-shadow: 0 4px 14px var(--accent-glow);
+      background: linear-gradient(180deg, var(--color-library-green-light) 0%, var(--color-library-green-hover) 100%);
+      border-color: var(--color-brass-bright);
+      color: #FFF8E7;
+      box-shadow: 0 4px 18px rgba(179, 148, 93, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4);
       transform: translateY(-1px);
     }
 
     .btn-secondary {
-      background-color: var(--bg-surface);
-      color: var(--text-primary);
-      border-color: var(--border-subtle);
+      background: linear-gradient(180deg, var(--color-walnut-elevated) 0%, var(--color-dark-walnut) 100%);
+      color: var(--color-aged-parchment);
+      border: 1px solid var(--border-medium);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(179, 148, 93, 0.15);
     }
 
     .btn-secondary:hover:not(:disabled) {
-      background-color: var(--bg-elevated);
-      border-color: var(--border-hover);
-      color: var(--accent-active);
+      background: var(--color-walnut-highlight);
+      border-color: var(--color-brass-bright);
+      color: var(--color-brass-bright);
+      box-shadow: 0 0 12px var(--color-brass-glow);
+      transform: translateY(-1px);
     }
 
     .btn-ghost {
       background: transparent;
       color: var(--text-muted);
-      border: 1px solid transparent;
-      padding: 0.45rem 0.8rem;
-      font-size: 0.8rem;
+      border: 1px solid var(--border-subtle);
+      padding: 0.45rem 0.85rem;
+      font-size: 0.75rem;
     }
 
     .btn-ghost:hover:not(:disabled) {
       background: var(--bg-surface);
-      border-color: var(--border-subtle);
-      color: var(--text-primary);
+      border-color: var(--color-aged-brass);
+      color: var(--color-parchment-bright);
     }
 
     /* ==========================================================================
-       LANDING VIEW
+       LANDING VIEW & HERO
        ========================================================================== */
     #landing-view {
       min-height: 100vh;
@@ -192,47 +247,66 @@
       display: none !important;
     }
 
+    /* Engraved Library Nameplate Header */
     .navbar {
       max-width: 1200px;
       width: 100%;
       margin: 0 auto;
-      padding: 1.25rem 2rem;
+      padding: 1.4rem 2rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid var(--border-subtle);
+      position: relative;
+    }
+
+    .navbar::after {
+      content: "❖";
+      position: absolute;
+      bottom: -7px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.72rem;
+      color: var(--color-aged-brass);
+      background: var(--bg-base);
+      padding: 0 0.6rem;
     }
 
     .brand {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 0.85rem;
       text-decoration: none;
       color: var(--text-primary);
     }
 
     .brand-icon {
-      width: 22px;
-      height: 22px;
-      color: var(--accent);
+      width: 24px;
+      height: 24px;
+      color: var(--color-aged-brass);
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+    }
+
+    .brand-title-group {
+      display: flex;
+      flex-direction: column;
     }
 
     .brand-name {
-      font-family: var(--font-pixel);
-      font-size: 1.2rem;
-      letter-spacing: 0.04em;
-      color: var(--text-primary);
+      font-family: var(--font-monumental);
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: var(--color-parchment-bright);
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
     }
 
-    .brand-tag {
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      color: var(--accent);
-      background: var(--accent-subtle);
-      padding: 0.15rem 0.45rem;
-      border-radius: var(--radius-xs);
-      border: 1px solid var(--border-subtle);
-      margin-left: 0.25rem;
+    .brand-subtitle {
+      font-family: var(--font-serif-body);
+      font-style: italic;
+      font-size: 0.72rem;
+      color: var(--color-parchment-muted);
+      letter-spacing: 0.04em;
     }
 
     .nav-actions {
@@ -241,138 +315,139 @@
       gap: 1rem;
     }
 
-    .badge-privacy {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-family: var(--font-mono);
+    #try-sample-btn {
+      padding: 0.45rem 1.1rem;
       font-size: 0.75rem;
-      color: var(--text-muted);
-      background: var(--bg-surface);
-      padding: 0.35rem 0.75rem;
-      border-radius: var(--radius-xs);
-      border: 1px solid var(--border-subtle);
+      border-color: var(--color-aged-brass);
+      background: linear-gradient(180deg, #302A22 0%, #24201A 100%);
     }
 
-    .badge-privacy .pulse-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background-color: var(--accent);
-      box-shadow: 0 0 6px var(--accent);
-    }
-
-    /* Hero Section */
+    /* Editorial Hero Section */
     .hero {
-      max-width: 1100px;
+      max-width: 1120px;
       width: 100%;
       margin: 0 auto;
-      padding: 3.5rem 2rem 2.5rem;
+      padding: 4.5rem 2rem 3rem;
       display: grid;
-      grid-template-columns: 1.15fr 0.85fr;
-      gap: 3.5rem;
+      grid-template-columns: 1.18fr 0.82fr;
+      gap: 4rem;
       align-items: center;
     }
 
-    .terminal-tag {
+    .archival-tag {
       display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      letter-spacing: 0.08em;
+      gap: 0.55rem;
+      font-family: var(--font-monumental);
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: var(--accent-active);
-      background: var(--bg-surface);
-      padding: 0.3rem 0.65rem;
+      color: var(--color-brass-bright);
+      background: rgba(41, 37, 31, 0.75);
+      padding: 0.35rem 0.85rem;
       border-radius: var(--radius-xs);
-      border: 1px solid var(--border-subtle);
-      margin-bottom: 1.25rem;
+      border: 1px solid var(--border-medium);
+      margin-bottom: 1.35rem;
+      box-shadow: inset 0 1px 0 rgba(207, 178, 122, 0.15);
     }
 
-    .terminal-tag .cursor {
-      display: inline-block;
-      width: 6px;
-      height: 12px;
-      background: var(--accent-active);
-      animation: blink 1.2s infinite;
-    }
-
-    @keyframes blink {
-      0%, 49% { opacity: 1; }
-      50%, 100% { opacity: 0; }
+    .archival-tag .tag-ornament {
+      color: var(--color-aged-brass);
     }
 
     .hero-title {
-      font-family: var(--font-pixel);
-      font-size: clamp(2rem, 4vw, 3rem);
-      font-weight: 400;
-      line-height: 1.18;
+      font-family: var(--font-serif-display);
+      font-size: clamp(2.3rem, 4.4vw, 3.4rem);
+      font-weight: 500;
+      line-height: 1.15;
       letter-spacing: -0.01em;
-      margin-bottom: 1.25rem;
-      color: var(--text-primary);
+      margin-bottom: 1.35rem;
+      color: var(--color-parchment-bright);
+      text-shadow: 0 3px 12px rgba(0, 0, 0, 0.8);
     }
 
     .hero-subtitle {
-      font-family: var(--font-sans);
-      font-size: 1rem;
-      line-height: 1.65;
+      font-family: var(--font-serif-body);
+      font-size: 1.02rem;
+      line-height: 1.75;
       color: var(--text-secondary);
-      margin-bottom: 2rem;
-      max-width: 520px;
+      margin-bottom: 2.25rem;
+      max-width: 530px;
     }
 
     .hero-cta-group {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.85rem;
+      gap: 1rem;
       align-items: center;
     }
 
-    /* Visual Open Book Illustration Showcase */
+    /* 3D Antique Book Showcase */
     .book-showcase {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
+      background: radial-gradient(circle at center, #2E2720 0%, #201C16 100%);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-sm);
       padding: 2.25rem 2rem;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      box-shadow: var(--shadow-soft);
+      box-shadow: var(--shadow-soft), inset 0 0 0 1px rgba(179, 148, 93, 0.15);
+      position: relative;
+    }
+
+    .antique-bookstand {
+      width: 100%;
+      max-width: 370px;
+      perspective: 1200px;
       position: relative;
     }
 
     .sample-book-3d {
       width: 100%;
-      max-width: 380px;
-      aspect-ratio: 1.45 / 1;
+      aspect-ratio: 1.42 / 1;
       display: flex;
-      background: #152018;
+      background: #191410;
       border-radius: var(--radius-xs);
-      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.85);
       position: relative;
-      perspective: 1200px;
-      border: 1px solid var(--border-subtle);
+      border: 1px solid var(--color-walnut-border);
+    }
+
+    /* Silk Ribbon Bookmark hanging from spine */
+    .sample-book-3d::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 8px;
+      height: 110%;
+      background: linear-gradient(180deg, var(--color-oxblood) 0%, var(--color-oxblood-dark) 100%);
+      border-radius: 0 0 2px 2px;
+      box-shadow: 2px 4px 10px rgba(0, 0, 0, 0.6);
+      z-index: 10;
+      pointer-events: none;
     }
 
     .sample-page {
       flex: 1;
-      padding: 1.25rem;
+      padding: 1.35rem 1.15rem;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       position: relative;
-      background: #18241B;
+      background: #FAF6ED;
+      color: #29251F;
     }
 
     .sample-page-left {
-      border-right: 1px solid var(--border-subtle);
-      background: linear-gradient(90deg, #18241B 88%, #111A13 100%);
+      border-right: 1px solid #D8C8A8;
+      background: linear-gradient(90deg, #F5EEDB 86%, #E2D7C0 100%);
     }
 
     .sample-page-right {
-      background: linear-gradient(-90deg, #18241B 88%, #111A13 100%);
+      background: linear-gradient(-90deg, #F5EEDB 86%, #E2D7C0 100%);
     }
 
     .sample-turning-leaf {
@@ -381,190 +456,269 @@
       top: 0;
       width: 50%;
       height: 100%;
-      background: linear-gradient(-90deg, #1D2B21 80%, #152018 100%);
+      background: linear-gradient(-90deg, #FBF8F0 82%, #E9DECA 100%);
       transform-origin: left center;
-      transform: rotateY(-28deg);
-      box-shadow: -8px 4px 18px rgba(0, 0, 0, 0.4);
-      border: 1px solid var(--border-hover);
+      transform: rotateY(-24deg);
+      box-shadow: -10px 6px 24px rgba(0, 0, 0, 0.55);
+      border: 1px solid #D8C8A8;
       border-left: none;
-      padding: 1.25rem;
+      padding: 1.35rem 1.15rem;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+      transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
       pointer-events: none;
     }
 
     .book-showcase:hover .sample-turning-leaf {
-      transform: rotateY(-54deg);
+      transform: rotateY(-52deg);
+    }
+
+    .mock-header-flourish {
+      font-size: 0.65rem;
+      color: var(--color-brass-dim);
+      text-align: center;
+      margin-bottom: 0.35rem;
+      letter-spacing: 0.1em;
+    }
+
+    .mock-book-title {
+      font-family: var(--font-serif-display);
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #3B332A;
+      text-align: center;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.35rem;
+    }
+
+    .mock-book-rule {
+      height: 1px;
+      background: #D8C8A8;
+      margin: 0 auto 0.65rem;
+      width: 70%;
+    }
+
+    .mock-paragraph {
+      display: flex;
+      gap: 0.45rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .mock-dropcap {
+      font-family: var(--font-serif-display);
+      font-size: 1.7rem;
+      line-height: 0.85;
+      color: var(--color-oxblood);
+      font-weight: bold;
+    }
+
+    .mock-text-flow {
+      flex: 1;
     }
 
     .mock-line {
-      height: 5px;
-      background: #2B3A2E;
-      border-radius: 2px;
-      margin-bottom: 8px;
+      height: 4px;
+      background: #D5CAB5;
+      border-radius: 1px;
+      margin-bottom: 6px;
     }
-
     .mock-line.short { width: 55%; }
-    .mock-line.title {
-      height: 9px;
-      width: 75%;
-      background: var(--accent);
-      margin-bottom: 12px;
-    }
 
-    .mock-art {
-      height: 58px;
-      background: #111A13;
-      border-radius: var(--radius-xs);
-      margin: 8px 0 10px;
-      border: 1px solid var(--border-subtle);
+    .mock-plate-crest {
+      height: 44px;
+      background: rgba(179, 148, 93, 0.08);
+      border: 1px solid #D8C8A8;
+      border-radius: 2px;
+      margin: 0.5rem 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--text-muted);
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      letter-spacing: 0.05em;
+      gap: 0.35rem;
+      font-family: var(--font-monumental);
+      font-size: 0.62rem;
+      color: #6E5B3E;
+      letter-spacing: 0.06em;
+    }
+
+    .mock-plate-crest svg {
+      width: 14px;
+      height: 14px;
+      color: var(--color-aged-brass);
+    }
+
+    .mock-quote-box {
+      font-family: var(--font-serif-body);
+      font-style: italic;
+      font-size: 0.68rem;
+      line-height: 1.4;
+      color: #5E5343;
+      padding: 0.35rem 0.5rem;
+      border-left: 2px solid var(--color-aged-brass);
+      margin: 0.5rem 0;
+      background: rgba(179, 148, 93, 0.06);
+    }
+
+    .mock-folio-num {
+      font-family: var(--font-monumental);
+      font-size: 0.62rem;
+      color: #8C7B65;
+      text-align: right;
+      letter-spacing: 0.06em;
+    }
+    .sample-page-left .mock-folio-num {
+      text-align: left;
     }
 
     .showcase-caption {
-      margin-top: 1.25rem;
+      margin-top: 1.35rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
       width: 100%;
       padding-top: 0.85rem;
       border-top: 1px solid var(--border-subtle);
-      font-family: var(--font-mono);
-      font-size: 0.78rem;
+      font-family: var(--font-monumental);
+      font-size: 0.72rem;
       color: var(--text-muted);
+      letter-spacing: 0.04em;
     }
 
-    /* Upload Section */
+    .showcase-caption-action {
+      color: var(--color-brass-bright);
+    }
+
+    /* ==========================================================================
+       UPLOAD COMPONENT — LEATHER WRITING DESK BLOTTER
+       ========================================================================== */
     .upload-wrapper {
-      max-width: 1100px;
+      max-width: 1120px;
       width: 100%;
-      margin: 0 auto 3.5rem;
+      margin: 0 auto 4rem;
       padding: 0 2rem;
     }
 
     .upload-card {
-      background: var(--bg-surface);
-      border: 1px dashed var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 3rem 2rem;
+      background: radial-gradient(circle at center, #243B2E 0%, #1A2C22 100%);
+      border: 1px solid var(--border-medium);
+      outline: 1px solid rgba(179, 148, 93, 0.22);
+      outline-offset: -7px;
+      border-radius: var(--radius-sm);
+      padding: 3.5rem 2rem;
       text-align: center;
-      transition: all 0.2s ease;
-      box-shadow: var(--shadow-soft);
+      transition: all 0.22s ease;
+      box-shadow: var(--shadow-leather);
       position: relative;
       cursor: pointer;
     }
 
     .upload-card:hover {
-      border-color: var(--border-hover);
-      background: var(--bg-elevated);
+      border-color: var(--color-aged-brass);
+      background: radial-gradient(circle at center, #2C4838 0%, #1E3328 100%);
+      box-shadow: inset 0 0 0 1px rgba(207, 178, 122, 0.4), 0 20px 48px rgba(0, 0, 0, 0.8);
     }
 
     .upload-card.drag-over {
-      border-color: var(--accent-active);
-      border-style: solid;
-      background: #162419;
-      box-shadow: 0 0 24px rgba(102, 139, 107, 0.25);
-      transform: scale(1.005);
+      border-color: var(--color-brass-bright);
+      outline-color: var(--color-brass-bright);
+      background: radial-gradient(circle at center, #355844 0%, #243D30 100%);
+      box-shadow: 0 0 35px var(--color-brass-glow), var(--shadow-leather);
+      transform: scale(1.006);
     }
 
-    /* Retro Technical Corner Reticles */
-    .upload-card::before {
-      content: "+";
+    /* Victorian Brass Filigree Corner Plates */
+    .brass-corner {
       position: absolute;
-      top: 10px;
-      left: 14px;
-      font-family: var(--font-mono);
-      font-size: 0.9rem;
-      color: var(--border-hover);
+      width: 22px;
+      height: 22px;
       pointer-events: none;
     }
-
-    .upload-card::after {
-      content: "+";
-      position: absolute;
-      bottom: 10px;
-      right: 14px;
-      font-family: var(--font-mono);
-      font-size: 0.9rem;
-      color: var(--border-hover);
-      pointer-events: none;
-    }
+    .brass-corner-tl { top: 12px; left: 12px; border-top: 2px solid var(--color-aged-brass); border-left: 2px solid var(--color-aged-brass); }
+    .brass-corner-tr { top: 12px; right: 12px; border-top: 2px solid var(--color-aged-brass); border-right: 2px solid var(--color-aged-brass); }
+    .brass-corner-bl { bottom: 12px; left: 12px; border-bottom: 2px solid var(--color-aged-brass); border-left: 2px solid var(--color-aged-brass); }
+    .brass-corner-br { bottom: 12px; right: 12px; border-bottom: 2px solid var(--color-aged-brass); border-right: 2px solid var(--color-aged-brass); }
 
     .upload-icon-circle {
-      width: 52px;
-      height: 52px;
-      border-radius: var(--radius-sm);
-      background: var(--bg-elevated);
-      border: 1px solid var(--border-subtle);
-      color: var(--accent);
+      width: 58px;
+      height: 58px;
+      border-radius: var(--radius-xs);
+      background: linear-gradient(180deg, #2D4838 0%, #1A2B22 100%);
+      border: 1px solid var(--color-aged-brass);
+      color: var(--color-brass-bright);
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 1.15rem;
-      transition: all 0.18s ease;
+      margin: 0 auto 1.25rem;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(207, 178, 122, 0.3);
     }
 
     .upload-card:hover .upload-icon-circle {
-      border-color: var(--accent);
-      color: var(--accent-active);
-      background: var(--accent-subtle);
+      border-color: var(--color-brass-bright);
+      color: #FFF8E7;
+      transform: translateY(-2px);
+      box-shadow: 0 0 16px var(--color-brass-glow);
+    }
+
+    .upload-tagline {
+      font-family: var(--font-monumental);
+      font-size: 0.72rem;
+      letter-spacing: 0.14em;
+      color: var(--color-brass-bright);
+      margin-bottom: 0.45rem;
+      text-transform: uppercase;
     }
 
     .upload-heading {
-      font-family: var(--font-mono);
-      font-size: 1.15rem;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      color: var(--text-primary);
+      font-family: var(--font-serif-display);
+      font-size: 1.65rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: var(--color-parchment-bright);
       margin-bottom: 0.5rem;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
     }
 
     .upload-subtext {
-      font-size: 0.88rem;
-      color: var(--text-secondary);
-      margin-bottom: 1.5rem;
+      font-family: var(--font-serif-body);
+      font-size: 0.92rem;
+      color: var(--color-parchment-dim);
+      margin-bottom: 1.65rem;
     }
 
     .upload-buttons {
       display: flex;
       justify-content: center;
-      gap: 0.85rem;
+      gap: 1rem;
       flex-wrap: wrap;
     }
 
     .privacy-footnote {
-      margin-top: 1.5rem;
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      color: var(--text-muted);
+      margin-top: 1.85rem;
+      font-family: var(--font-monumental);
+      font-size: 0.72rem;
+      letter-spacing: 0.05em;
+      color: var(--color-parchment-muted);
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 0.45rem;
+      gap: 0.55rem;
     }
 
-    /* Selected File State & Options */
+    /* Selected File Archival Slip */
     .selected-file-panel {
       display: none;
-      max-width: 640px;
+      max-width: 660px;
       width: 100%;
-      margin: 1.5rem auto 0;
-      background: var(--bg-elevated);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 1.25rem 1.5rem;
+      margin: 1.75rem auto 0;
+      background: #FAF6ED;
+      color: #29251F;
+      border: 1px solid var(--color-aged-brass);
+      border-radius: var(--radius-xs);
+      padding: 1.35rem 1.65rem;
       text-align: left;
       box-sizing: border-box;
-      overflow: hidden;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.7), inset 0 0 0 1px rgba(179, 148, 93, 0.3);
     }
 
     .selected-file-panel.active {
@@ -577,7 +731,7 @@
       justify-content: space-between;
       gap: 1rem;
       padding-bottom: 1rem;
-      border-bottom: 1px solid var(--border-subtle);
+      border-bottom: 1px solid #D8C8A8;
       min-width: 0;
       width: 100%;
     }
@@ -585,28 +739,30 @@
     .file-info {
       display: flex;
       align-items: center;
-      gap: 0.85rem;
+      gap: 0.95rem;
       flex: 1;
       min-width: 0;
       overflow: hidden;
     }
 
-    .file-info svg {
+    .doc-wax-seal {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--color-oxblood);
+      color: #FFF2F0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       flex-shrink: 0;
-    }
-
-    .file-text-col,
-    .file-info > div {
-      flex: 1;
-      min-width: 0;
-      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
     }
 
     .file-name {
-      font-family: var(--font-mono);
-      font-weight: 600;
-      font-size: 0.92rem;
-      color: var(--text-primary);
+      font-family: var(--font-serif-display);
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: #24201A;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -616,28 +772,30 @@
 
     .file-size {
       font-family: var(--font-mono);
-      font-size: 0.75rem;
-      color: var(--text-muted);
+      font-size: 0.76rem;
+      color: #6E5E48;
       white-space: nowrap;
       margin-top: 0.15rem;
     }
 
     .file-meta-row #remove-file-btn {
       flex-shrink: 0;
-      font-family: var(--font-mono);
-      font-size: 0.78rem;
-      color: var(--text-muted);
-      border: 1px solid var(--border-subtle);
+      font-family: var(--font-monumental);
+      font-size: 0.72rem;
+      letter-spacing: 0.05em;
+      color: var(--color-oxblood);
+      border: 1px solid var(--color-oxblood);
       border-radius: var(--radius-xs);
-      padding: 0.35rem 0.75rem;
+      padding: 0.4rem 0.85rem;
       background: transparent;
       cursor: pointer;
+      transition: all 0.18s ease;
     }
 
     .file-meta-row #remove-file-btn:hover {
-      color: var(--error-text);
-      border-color: var(--error-border);
-      background: var(--error-bg);
+      color: #FFF2F0;
+      background: var(--color-oxblood);
+      box-shadow: 0 2px 8px rgba(117, 64, 57, 0.4);
     }
 
     .book-config-row {
@@ -646,78 +804,99 @@
       align-items: center;
       justify-content: space-between;
       gap: 1rem;
-      padding-top: 1rem;
+      padding-top: 1.15rem;
     }
 
     .checkbox-label {
       display: inline-flex;
       align-items: center;
-      gap: 0.55rem;
-      font-family: var(--font-mono);
-      font-size: 0.8rem;
-      color: var(--text-secondary);
+      gap: 0.65rem;
+      font-family: var(--font-serif-body);
+      font-size: 0.86rem;
+      color: #3D352A;
       cursor: pointer;
       user-select: none;
     }
 
     .checkbox-label input {
-      accent-color: var(--accent);
-      width: 16px;
-      height: 16px;
+      accent-color: var(--color-library-green);
+      width: 17px;
+      height: 17px;
       cursor: pointer;
     }
 
-    /* Password Prompt */
+    /* Archival Locked Folio Password Prompt */
     .password-panel {
       display: none;
-      max-width: 520px;
-      margin: 1.25rem auto 0;
-      background: var(--bg-elevated);
-      border: 1px solid var(--warn-border);
-      border-radius: var(--radius-md);
-      padding: 1.25rem;
+      max-width: 540px;
+      margin: 1.5rem auto 0;
+      background: #FAF6ED;
+      color: #29251F;
+      border: 1px solid var(--color-aged-brass);
+      border-radius: var(--radius-xs);
+      padding: 1.35rem 1.5rem;
       text-align: left;
+      box-shadow: var(--shadow-soft);
     }
 
     .password-panel.active {
       display: block;
     }
 
+    .password-title {
+      font-family: var(--font-monumental);
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 0.08em;
+      color: var(--color-oxblood);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .password-desc {
+      font-family: var(--font-serif-body);
+      font-size: 0.85rem;
+      color: #554A3A;
+      margin-top: 0.35rem;
+    }
+
     .password-input-group {
       display: flex;
-      gap: 0.5rem;
-      margin-top: 0.75rem;
+      gap: 0.65rem;
+      margin-top: 0.85rem;
     }
 
     .text-input {
       flex: 1;
-      padding: 0.6rem 0.85rem;
-      background: var(--bg-base);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-sm);
-      color: var(--text-primary);
+      padding: 0.65rem 0.95rem;
+      background: #FFFDF9;
+      border: 1px solid #D8C8A8;
+      border-radius: var(--radius-xs);
+      color: #24201A;
       font-family: var(--font-mono);
-      font-size: 0.85rem;
+      font-size: 0.88rem;
     }
 
     .text-input:focus {
-      border-color: var(--accent);
+      border-color: var(--color-aged-brass);
       outline: none;
+      box-shadow: 0 0 6px var(--color-brass-glow);
     }
 
-    /* Alerts & Warnings */
+    /* Alerts */
     .alert-box {
       display: none;
-      max-width: 640px;
-      margin: 1rem auto 0;
-      padding: 0.75rem 1.15rem;
-      border-radius: var(--radius-sm);
-      font-family: var(--font-mono);
-      font-size: 0.82rem;
+      max-width: 660px;
+      margin: 1.25rem auto 0;
+      padding: 0.85rem 1.25rem;
+      border-radius: var(--radius-xs);
+      font-family: var(--font-serif-body);
+      font-size: 0.88rem;
       text-align: left;
       align-items: center;
       justify-content: space-between;
-      gap: 0.75rem;
+      gap: 0.85rem;
     }
 
     .alert-box.active {
@@ -725,27 +904,28 @@
     }
 
     .alert-error {
-      background: var(--error-bg);
-      color: var(--error-text);
-      border: 1px solid var(--error-border);
+      background: rgba(117, 64, 57, 0.15);
+      color: #E8A8A0;
+      border: 1px solid var(--color-oxblood);
     }
 
     .alert-warn {
-      background: var(--warn-bg);
-      color: var(--warn-text);
-      border: 1px solid var(--warn-border);
+      background: rgba(179, 148, 93, 0.15);
+      color: var(--color-brass-bright);
+      border: 1px solid var(--color-aged-brass);
     }
 
-    /* Processing Progress Panel */
+    /* Real-Time PDF Progress Panel */
     .progress-panel {
       display: none;
-      max-width: 580px;
-      margin: 1.5rem auto 0;
-      background: var(--bg-elevated);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 1.25rem 1.5rem;
+      max-width: 600px;
+      margin: 1.75rem auto 0;
+      background: var(--color-dark-walnut);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-sm);
+      padding: 1.35rem 1.65rem;
       text-align: left;
+      box-shadow: var(--shadow-soft);
     }
 
     .progress-panel.active {
@@ -756,87 +936,168 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 0.6rem;
-      font-family: var(--font-mono);
-      font-size: 0.85rem;
-      font-weight: 500;
+      margin-bottom: 0.75rem;
+      font-family: var(--font-serif-display);
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--color-parchment-bright);
     }
 
     .progress-pct {
       font-family: var(--font-mono);
-      font-size: 0.85rem;
-      color: var(--accent-active);
+      font-size: 0.88rem;
+      color: var(--color-brass-bright);
       font-weight: 700;
     }
 
     .progress-track {
       width: 100%;
       height: 8px;
-      background: var(--bg-base);
+      background: var(--color-smoked-ebony);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-xs);
       overflow: hidden;
-      margin-bottom: 0.85rem;
+      margin-bottom: 0.95rem;
     }
 
     .progress-fill {
       height: 100%;
       width: 0%;
-      background: var(--accent-active);
-      box-shadow: 0 0 10px var(--accent-glow);
-      transition: width 0.15s ease;
+      background: linear-gradient(90deg, var(--color-library-green) 0%, var(--color-aged-brass) 100%);
+      box-shadow: 0 0 10px var(--color-brass-glow);
+      transition: width 0.18s ease;
     }
 
     .progress-footer {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-family: var(--font-mono);
-      font-size: 0.78rem;
+      font-family: var(--font-serif-body);
+      font-size: 0.82rem;
       color: var(--text-muted);
     }
 
-    /* Technical Spec Strip */
+    /* Archival Specifications Strip */
     .features-section {
-      max-width: 1100px;
+      max-width: 1120px;
       width: 100%;
-      margin: 0 auto 3.5rem;
-      padding: 2.5rem 2rem 0;
+      margin: 0 auto 4rem;
+      padding: 3rem 2rem 0;
       border-top: 1px solid var(--border-subtle);
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 1.5rem;
+      position: relative;
+    }
+
+    .features-section::before {
+      content: "❖";
+      position: absolute;
+      top: -9px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.78rem;
+      color: var(--color-aged-brass);
+      background: var(--bg-base);
+      padding: 0 0.6rem;
     }
 
     .feature-item {
-      background: var(--bg-surface);
+      background: linear-gradient(180deg, #27221C 0%, #1F1B16 100%);
       border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 1.25rem;
-      transition: border-color 0.18s ease;
+      border-radius: var(--radius-xs);
+      padding: 1.4rem;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     }
 
     .feature-item:hover {
-      border-color: var(--border-hover);
+      border-color: var(--color-aged-brass);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6), 0 0 10px var(--color-brass-glow);
+      transform: translateY(-2px);
+    }
+
+    .feature-index {
+      font-family: var(--font-monumental);
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--color-brass-bright);
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.08em;
     }
 
     .feature-item h3 {
-      font-family: var(--font-mono);
-      font-size: 0.85rem;
-      font-weight: 700;
+      font-family: var(--font-serif-display);
+      font-size: 1.05rem;
+      font-weight: 600;
       letter-spacing: 0.03em;
-      margin-bottom: 0.45rem;
-      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+      color: var(--color-parchment-bright);
     }
 
     .feature-item p {
-      font-size: 0.82rem;
-      line-height: 1.5;
+      font-family: var(--font-serif-body);
+      font-size: 0.85rem;
+      line-height: 1.6;
       color: var(--text-secondary);
     }
 
+    /* Colophon Footer */
+    .colophon-footer {
+      margin-top: auto;
+      border-top: 1px solid var(--border-subtle);
+      padding: 3rem 2rem 3.5rem;
+      text-align: center;
+      background: #14120F;
+    }
+
+    .colophon-divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      max-width: 320px;
+      margin: 0 auto 1.25rem;
+      gap: 1rem;
+    }
+
+    .colophon-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border-subtle);
+    }
+
+    .colophon-seal {
+      color: var(--color-aged-brass);
+      font-size: 0.85rem;
+      letter-spacing: 0.15em;
+    }
+
+    .colophon-brand {
+      font-family: var(--font-monumental);
+      font-size: 0.92rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: var(--color-parchment-bright);
+      margin-bottom: 0.45rem;
+    }
+
+    .colophon-sub {
+      font-family: var(--font-serif-body);
+      font-style: italic;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-bottom: 0.65rem;
+    }
+
+    .colophon-creds {
+      font-family: var(--font-monumental);
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      color: var(--color-brass-dim);
+    }
+
     /* ==========================================================================
-       READER VIEW & 3D FLIPBOOK
+       READER VIEW & DARK WALNUT READING TABLE
        ========================================================================== */
     #reader-view {
       position: fixed;
@@ -851,12 +1112,13 @@
       display: none !important;
     }
 
-    /* Top Reader Bar */
+    /* Top Reader Bar — Walnut & Brass Rail */
     .reader-topbar {
       height: 52px;
-      background: var(--bg-surface);
-      border-bottom: 1px solid var(--border-subtle);
-      padding: 0 1.25rem;
+      background: linear-gradient(180deg, #2B2620 0%, #201C17 100%);
+      border-bottom: 1px solid var(--border-medium);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), inset 0 -1px 0 rgba(179, 148, 93, 0.25);
+      padding: 0 1.35rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -868,61 +1130,75 @@
     .reader-doc-info {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 0.85rem;
       min-width: 0;
       flex: 1;
     }
 
     .reader-doc-title {
-      font-family: var(--font-mono);
-      font-size: 0.85rem;
+      font-family: var(--font-serif-display);
+      font-size: 1.08rem;
       font-weight: 600;
+      letter-spacing: 0.02em;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 380px;
+      max-width: 400px;
       flex-shrink: 1;
       min-width: 0;
-      color: var(--text-primary);
+      color: var(--color-parchment-bright);
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
     }
 
     .reader-badge {
-      font-family: var(--font-mono);
+      font-family: var(--font-monumental);
       font-size: 0.72rem;
-      padding: 0.2rem 0.5rem;
-      background: var(--bg-elevated);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 0.22rem 0.65rem;
+      background: var(--color-smoked-ebony);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-xs);
-      color: var(--text-muted);
+      color: var(--color-brass-bright);
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
     }
 
     .reader-top-actions {
       display: flex;
       align-items: center;
-      gap: 0.45rem;
+      gap: 0.55rem;
     }
 
     .icon-btn {
-      background: transparent;
-      border: 1px solid var(--border-subtle);
-      color: var(--text-secondary);
+      background: linear-gradient(180deg, #322C24 0%, #24201A 100%);
+      border: 1px solid var(--border-medium);
+      color: var(--color-aged-parchment);
       height: 34px;
-      padding: 0 0.65rem;
-      border-radius: var(--radius-sm);
+      padding: 0 0.75rem;
+      border-radius: var(--radius-xs);
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 0.4rem;
-      font-family: var(--font-mono);
-      font-size: 0.78rem;
+      gap: 0.45rem;
+      font-family: var(--font-monumental);
+      font-size: 0.75rem;
+      letter-spacing: 0.04em;
       cursor: pointer;
-      transition: all 0.15s ease;
+      transition: all 0.18s ease;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(207, 178, 122, 0.15);
     }
 
     .icon-btn:hover:not(:disabled) {
-      background: var(--bg-elevated);
-      border-color: var(--border-hover);
-      color: var(--text-primary);
+      background: var(--color-walnut-highlight);
+      border-color: var(--color-brass-bright);
+      color: #FFF8E7;
+      box-shadow: 0 0 10px var(--color-brass-glow);
+      transform: translateY(-1px);
+    }
+
+    .icon-btn:active:not(:disabled) {
+      transform: translateY(1px);
+      box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.6);
     }
 
     .icon-btn:disabled {
@@ -931,35 +1207,89 @@
     }
 
     .icon-btn.active {
-      background: var(--accent-subtle);
-      border-color: var(--accent);
-      color: var(--accent-active);
+      background: var(--color-library-green);
+      border-color: var(--color-brass-bright);
+      color: #FFF8E7;
+    }
+
+    #close-reader-btn {
+      background: linear-gradient(180deg, #4A2823 0%, #381E1A 100%);
+      border-color: rgba(117, 64, 57, 0.8);
+      color: #F8D0CB;
     }
 
     #close-reader-btn:hover {
-      background: var(--error-bg);
-      border-color: var(--error-border);
-      color: var(--error-text);
+      background: var(--color-oxblood);
+      border-color: #A0554C;
+      color: #FFFFFF;
+      box-shadow: 0 0 12px rgba(117, 64, 57, 0.5);
     }
 
-    /* Central Book Stage */
+    /* Central Dark Walnut Reading Table */
     .reader-stage {
       flex: 1;
       position: relative;
       display: block;
       overflow: hidden;
       padding: 0;
-      background: radial-gradient(circle at center, #141E16 0%, #0B0F0C 100%);
+      background-color: #191714;
+      background-image:
+        /* Desk Lamp Center Spotlight */
+        radial-gradient(ellipse 75% 65% at 50% 46%, rgba(216, 200, 168, 0.12) 0%, rgba(179, 148, 93, 0.05) 45%, rgba(25, 23, 20, 0.6) 80%, rgba(16, 14, 12, 0.96) 100%),
+        /* Walnut Planks */
+        repeating-linear-gradient(90deg,
+          #24201A 0px,
+          #29251E 40px,
+          #211E18 80px,
+          #2C2720 125px,
+          #1E1B16 165px,
+          #29241E 210px,
+          #221F19 260px
+        ),
+        /* Micro-grain Horizontal Fibers */
+        repeating-linear-gradient(0deg,
+          rgba(0, 0, 0, 0.12) 0px,
+          transparent 2px,
+          rgba(179, 148, 93, 0.02) 3px,
+          transparent 6px
+        );
       user-select: none;
       -webkit-user-select: none;
       touch-action: none;
+    }
+
+    /* Leather Desk Blotter Pad beneath Book */
+    .reader-stage::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: min(94vw, 1340px);
+      height: min(86vh, 900px);
+      background: 
+        radial-gradient(circle at center, rgba(38, 61, 48, 0.55) 0%, rgba(24, 38, 30, 0.8) 100%),
+        #1C2D24;
+      border-radius: 6px;
+      box-shadow: 
+        inset 0 0 0 1px rgba(179, 148, 93, 0.35),
+        inset 0 0 0 5px rgba(25, 23, 20, 0.85),
+        inset 0 0 0 6px rgba(179, 148, 93, 0.22),
+        0 26px 65px rgba(0, 0, 0, 0.82);
+      pointer-events: none;
+      z-index: 1;
+      transition: opacity 0.3s ease;
+    }
+
+    .reader-stage.zoomed::before {
+      opacity: 0.18;
     }
 
     .reader-stage.zoomed {
       overflow: auto;
       cursor: grab;
       scrollbar-width: thin;
-      scrollbar-color: var(--border-hover) var(--bg-base);
+      scrollbar-color: var(--color-brass-dim) var(--bg-base);
       touch-action: pan-x pan-y;
     }
 
@@ -967,48 +1297,33 @@
       cursor: grabbing;
     }
 
-    .reader-stage.zoomed::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-
-    .reader-stage.zoomed::-webkit-scrollbar-track {
-      background: var(--bg-base);
-    }
-
-    .reader-stage.zoomed::-webkit-scrollbar-thumb {
-      background: var(--border-subtle);
-      border-radius: var(--radius-xs);
-    }
-
-    .reader-stage.zoomed::-webkit-scrollbar-thumb:hover {
-      background: var(--border-hover);
-    }
-
-    /* Floating Side Navigation Arrows */
+    /* Floating Side Navigation Arrows — Brass Book Clasps */
     .stage-nav-arrow {
       position: fixed;
       top: 50%;
       transform: translateY(-50%);
-      width: 44px;
-      height: 64px;
-      border-radius: var(--radius-md);
-      background: rgba(18, 26, 20, 0.88);
-      border: 1px solid var(--border-subtle);
-      color: var(--text-secondary);
+      width: 46px;
+      height: 74px;
+      border-radius: var(--radius-xs);
+      background: rgba(36, 32, 26, 0.9);
+      border: 1px solid var(--color-aged-brass);
+      color: var(--color-brass-bright);
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       z-index: 25;
-      transition: all 0.15s ease;
+      transition: all 0.2s ease;
       backdrop-filter: blur(8px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(179, 148, 93, 0.2);
     }
 
     .stage-nav-arrow:hover:not(:disabled) {
-      background: var(--bg-elevated);
-      border-color: var(--accent);
-      color: var(--accent-active);
+      background: var(--color-library-green);
+      border-color: var(--color-brass-bright);
+      color: #FFF8E7;
+      box-shadow: 0 0 18px var(--color-brass-glow), 0 12px 30px rgba(0, 0, 0, 0.8);
+      transform: translateY(-50%) scale(1.05);
     }
 
     .stage-nav-arrow:disabled {
@@ -1016,18 +1331,19 @@
       cursor: default;
     }
 
-    .stage-nav-prev { left: 1rem; }
-    .stage-nav-next { right: 1rem; }
+    .stage-nav-prev { left: 1.25rem; }
+    .stage-nav-next { right: 1.25rem; }
 
     /* Zoom Transform Wrapper */
     .book-zoom-layer {
       position: relative;
       flex-shrink: 0;
       box-sizing: border-box;
+      z-index: 5;
       transition: width 0.18s ease-out, height 0.18s ease-out, margin 0.18s ease-out;
     }
 
-    /* StPageFlip Container & Realistic Book Styling */
+    /* StPageFlip Container & Elevated Book Presentation */
     #flipbook-container {
       box-shadow: var(--shadow-book);
       position: absolute;
@@ -1081,15 +1397,15 @@
       -webkit-backface-visibility: hidden !important;
     }
 
-    /* Realistic Central Spine Crease & Page Curvature Lighting */
+    /* Central Spine Crease & Page Curvature Lighting */
     .flip-page.--left::after {
       content: "";
       position: absolute;
       top: 0;
       right: 0;
       bottom: 0;
-      width: 32px;
-      background: linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.04) 60%, rgba(0,0,0,0.16) 100%);
+      width: 38px;
+      background: linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(30, 24, 18, 0.05) 50%, rgba(20, 16, 12, 0.22) 100%);
       pointer-events: none;
       z-index: 2;
     }
@@ -1100,8 +1416,8 @@
       top: 0;
       left: 0;
       bottom: 0;
-      width: 32px;
-      background: linear-gradient(to left, rgba(0,0,0,0) 0%, rgba(0,0,0,0.04) 60%, rgba(0,0,0,0.16) 100%);
+      width: 38px;
+      background: linear-gradient(to left, rgba(0,0,0,0) 0%, rgba(30, 24, 18, 0.05) 50%, rgba(20, 16, 12, 0.22) 100%);
       pointer-events: none;
       z-index: 2;
     }
@@ -1116,23 +1432,25 @@
 
     .page-number-badge {
       position: absolute;
-      bottom: 8px;
-      font-family: var(--font-mono);
-      font-size: 0.68rem;
-      color: rgba(60, 58, 54, 0.55);
+      bottom: 10px;
+      font-family: var(--font-monumental);
+      font-size: 0.65rem;
+      letter-spacing: 0.08em;
+      color: rgba(90, 72, 42, 0.65);
       pointer-events: none;
       z-index: 5;
     }
 
-    .flip-page.--left .page-number-badge { left: 12px; }
-    .flip-page.--right .page-number-badge { right: 12px; }
+    .flip-page.--left .page-number-badge { left: 14px; }
+    .flip-page.--right .page-number-badge { right: 14px; }
 
-    /* Bottom Reader Toolbar */
+    /* Bottom Reader Toolbar — Leather & Brass Fitted Control Bar */
     .reader-bottombar {
       height: 54px;
-      background: var(--bg-surface);
-      border-top: 1px solid var(--border-subtle);
-      padding: 0 1.25rem;
+      background: linear-gradient(180deg, #2A251F 0%, #1F1B16 100%);
+      border-top: 1px solid var(--border-medium);
+      box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(179, 148, 93, 0.25);
+      padding: 0 1.35rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -1145,65 +1463,70 @@
     .toolbar-group {
       display: flex;
       align-items: center;
-      gap: 0.4rem;
+      gap: 0.45rem;
     }
 
     .page-indicator-pill {
-      font-family: var(--font-mono);
-      font-size: 0.8rem;
-      padding: 0.35rem 0.85rem;
-      background: var(--bg-elevated);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-sm);
-      color: var(--text-primary);
-      min-width: 145px;
+      font-family: var(--font-serif-display);
+      font-size: 0.98rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      padding: 0.38rem 1rem;
+      background: var(--color-smoked-ebony);
+      border: 1px solid var(--color-aged-brass);
+      border-radius: var(--radius-xs);
+      color: var(--color-parchment-bright);
+      min-width: 165px;
       text-align: center;
+      box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.6), 0 1px 0 rgba(207, 178, 122, 0.15);
     }
 
     .goto-form {
       display: flex;
       align-items: center;
-      gap: 0.4rem;
+      gap: 0.45rem;
     }
 
     .goto-input {
-      width: 54px;
+      width: 58px;
       height: 32px;
-      background: var(--bg-base);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-sm);
-      color: var(--text-primary);
+      background: var(--color-smoked-ebony);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-xs);
+      color: var(--color-brass-bright);
       font-family: var(--font-mono);
-      font-size: 0.82rem;
+      font-size: 0.85rem;
       text-align: center;
       padding: 0 0.35rem;
     }
 
     .goto-input:focus {
-      border-color: var(--accent);
+      border-color: var(--color-aged-brass);
+      box-shadow: 0 0 6px var(--color-brass-glow);
       outline: none;
     }
 
     .zoom-readout {
       font-family: var(--font-mono);
-      font-size: 0.8rem;
-      width: 48px;
+      font-size: 0.82rem;
+      width: 52px;
       text-align: center;
-      color: var(--accent-active);
+      color: var(--color-brass-bright);
       font-weight: 600;
     }
 
-    /* Table of Contents Drawer */
+    /* Table of Contents Drawer — Dark Leather Folio Index */
     .toc-drawer {
       position: absolute;
       top: 52px;
       left: 0;
       bottom: 54px;
-      width: 280px;
-      background: var(--bg-surface);
-      border-right: 1px solid var(--border-subtle);
+      width: 290px;
+      background: #201C17;
+      border-right: 1px solid var(--border-medium);
+      box-shadow: 8px 0 24px rgba(0, 0, 0, 0.7);
       z-index: 28;
-      padding: 1rem;
+      padding: 1.25rem;
       overflow-y: auto;
       transform: translateX(-100%);
       transition: transform 0.22s ease;
@@ -1214,12 +1537,12 @@
     }
 
     .toc-title {
-      font-size: 0.75rem;
-      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      font-family: var(--font-monumental);
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-muted);
-      margin-bottom: 0.75rem;
+      letter-spacing: 0.12em;
+      color: var(--color-brass-bright);
+      margin-bottom: 0.85rem;
       padding-bottom: 0.5rem;
       border-bottom: 1px solid var(--border-subtle);
     }
@@ -1233,11 +1556,11 @@
       text-align: left;
       background: transparent;
       border: 1px solid transparent;
-      color: var(--text-secondary);
-      padding: 0.55rem 0.6rem;
-      border-radius: var(--radius-sm);
-      font-family: var(--font-mono);
-      font-size: 0.8rem;
+      color: var(--color-aged-parchment);
+      padding: 0.6rem 0.7rem;
+      border-radius: var(--radius-xs);
+      font-family: var(--font-serif-body);
+      font-size: 0.85rem;
       cursor: pointer;
       display: flex;
       justify-content: space-between;
@@ -1246,22 +1569,22 @@
     }
 
     .toc-item-btn:hover {
-      background: var(--bg-elevated);
-      border-color: var(--border-subtle);
-      color: var(--text-primary);
+      background: var(--color-walnut-elevated);
+      border-color: var(--color-aged-brass);
+      color: var(--color-parchment-bright);
     }
 
-    /* Help & Shortcuts Modal */
+    /* Help & Shortcuts Modal — Archival Library Leaflet */
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(11, 15, 12, 0.82);
+      background: rgba(14, 12, 10, 0.85);
       display: none;
       align-items: center;
       justify-content: center;
       z-index: 200;
       padding: 1rem;
-      backdrop-filter: blur(4px);
+      backdrop-filter: blur(5px);
     }
 
     .modal-backdrop.open {
@@ -1269,56 +1592,61 @@
     }
 
     .modal-dialog {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
+      background: linear-gradient(180deg, #27221C 0%, #1E1A15 100%);
+      border: 1px solid var(--color-aged-brass);
+      outline: 1px solid rgba(179, 148, 93, 0.25);
+      outline-offset: -5px;
+      border-radius: var(--radius-xs);
       color: var(--text-primary);
-      max-width: 480px;
+      max-width: 500px;
       width: 100%;
-      padding: 1.5rem;
-      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.75);
+      padding: 1.85rem;
+      box-shadow: 0 28px 60px rgba(0, 0, 0, 0.85);
     }
 
     .modal-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 1rem;
-      padding-bottom: 0.75rem;
-      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.85rem;
+      border-bottom: 1px solid var(--border-medium);
     }
 
     .modal-header h2 {
-      font-family: var(--font-pixel);
-      font-size: 1.15rem;
-      font-weight: 400;
-      letter-spacing: 0.02em;
+      font-family: var(--font-monumental);
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--color-brass-bright);
     }
 
     .shortcut-grid {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 0.65rem;
-      font-size: 0.85rem;
+      gap: 0.75rem;
+      font-size: 0.86rem;
     }
 
     .shortcut-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0.4rem 0;
+      padding: 0.45rem 0;
       border-bottom: 1px solid var(--border-subtle);
       color: var(--text-secondary);
+      font-family: var(--font-serif-body);
     }
 
     kbd {
       font-family: var(--font-mono);
       font-size: 0.75rem;
       background: var(--bg-base);
-      border: 1px solid var(--border-subtle);
-      padding: 0.2rem 0.5rem;
+      border: 1px solid var(--color-aged-brass);
+      padding: 0.25rem 0.55rem;
       border-radius: var(--radius-xs);
-      color: var(--accent-active);
+      color: var(--color-brass-bright);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
     }
 
     /* Reduced Motion Preferences */
@@ -1333,8 +1661,8 @@
     @media (max-width: 960px) {
       .hero {
         grid-template-columns: 1fr;
-        gap: 2.5rem;
-        padding: 2.5rem 1.5rem;
+        gap: 3rem;
+        padding: 3rem 1.5rem;
       }
       .features-section {
         grid-template-columns: repeat(2, 1fr);
@@ -1342,12 +1670,11 @@
     }
 
     @media (max-width: 640px) {
-      .navbar { padding: 1rem 1.25rem; }
-      .badge-privacy { display: none; }
+      .navbar { padding: 1.15rem 1.25rem; }
       .features-section { grid-template-columns: 1fr; }
       .stage-nav-arrow { display: none !important; }
 
-      /* 1. Topbar Responsive Optimization: Zero Overlap */
+      /* Topbar Responsive Optimization */
       .reader-topbar {
         height: 48px;
         padding: 0 0.65rem;
@@ -1359,7 +1686,7 @@
         flex: 1;
       }
       .reader-doc-title {
-        font-size: 0.8rem;
+        font-size: 0.88rem;
         max-width: 140px;
         min-width: 0;
         white-space: nowrap;
@@ -1367,8 +1694,8 @@
         text-overflow: ellipsis;
       }
       .reader-badge {
-        font-size: 0.68rem;
-        padding: 0.15rem 0.4rem;
+        font-size: 0.65rem;
+        padding: 0.15rem 0.45rem;
         white-space: nowrap;
         flex-shrink: 0;
       }
@@ -1389,7 +1716,7 @@
         display: none !important;
       }
 
-      /* 2. Bottombar Compact Layout: Zero Sideways Scroll */
+      /* Bottombar Compact Layout */
       .reader-bottombar {
         height: 48px;
         padding: 0 0.5rem;
@@ -1411,8 +1738,8 @@
         display: none !important;
       }
       .page-indicator-pill {
-        min-width: 75px;
-        font-size: 0.72rem;
+        min-width: 80px;
+        font-size: 0.75rem;
         padding: 0.25rem 0.45rem;
         white-space: nowrap;
       }
@@ -1427,7 +1754,7 @@
         display: none !important;
       }
 
-      /* 3. Touch Optimization */
+      /* Touch Optimization */
       .reader-stage:not(.zoomed),
       .reader-stage:not(.zoomed) #flipbook-container,
       .reader-stage:not(.zoomed) .stf__parent,
@@ -1443,20 +1770,25 @@
   <div id="sr-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
   <!-- ========================================================================
-       STEP 1 & 2: LANDING & UPLOAD VIEW
+       LANDING & UPLOAD VIEW — THE ENTRANCE TO THE SANCTUARY
        ======================================================================== -->
   <div id="landing-view">
     <header class="navbar">
-      <a href="#" class="brand" aria-label="FlipBook Studio Home">
-        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <a href="#" class="brand" aria-label="The Midnight Reading Room">
+        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
           <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
           <path d="M12 2v20"/>
+          <path d="M7 6h3"/>
+          <path d="M7 10h3"/>
         </svg>
-        <span class="brand-name">FLIPBOOK</span>
+        <div class="brand-title-group">
+          <span class="brand-name">THE MIDNIGHT READING ROOM</span>
+          <span class="brand-subtitle">A Digital Folio Sanctuary</span>
+        </div>
       </a>
       <div class="nav-actions">
-        <button type="button" class="btn btn-secondary" id="try-sample-btn" style="padding: 0.45rem 0.95rem; font-size: 0.8rem;">
-          Load Sample Booklet
+        <button type="button" class="btn btn-secondary" id="try-sample-btn" title="Inspect specimen booklet">
+          ❖ Inspect Sample Folio
         </button>
       </div>
     </header>
@@ -1464,131 +1796,180 @@
     <main>
       <section class="hero">
         <div class="hero-content">
-          <div class="terminal-tag">
-            <span class="cursor"></span>
-            <span>SYSTEM // PDF_TO_3D_ENGINE</span>
+          <div class="archival-tag">
+            <span class="tag-ornament">✦</span>
+            <span>ARCHIVAL FOLIO SANCTUARY • NO. 07</span>
           </div>
-          <h1 class="hero-title">GIVE YOUR PDF A NEW DIMENSION.</h1>
+          <h1 class="hero-title">Every book has a room of its own.</h1>
           <p class="hero-subtitle">
-            Transform flat documents into tactile 3D editions in real time. Experience dual-page spreads, realistic page curl physics, dynamic spine crease shading, and deep vector zoom — processed client-side with zero server round-trips.
+            Bring your documents into a more intimate reading space. Transform any PDF into an antique volume you can open, explore, and turn leaf by leaf on an aged walnut reading table.
           </p>
           <div class="hero-cta-group">
             <button type="button" class="btn btn-primary" id="hero-create-btn">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="17 8 12 3 7 8"/>
-                <line x1="12" y1="3" x2="12" y2="15"/>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+                <path d="M12 2v20"/>
               </svg>
-              Upload PDF File
+              Place Document on Reading Desk
             </button>
           </div>
         </div>
 
-        <!-- Sample Open-Book Visual Demonstration -->
+        <!-- Antique Open-Book Visual Demonstration -->
         <div class="book-showcase" aria-hidden="true">
-          <div class="sample-book-3d">
-            <div class="sample-page sample-page-left">
-              <div>
-                <div class="mock-line title"></div>
-                <div class="mock-line"></div>
-                <div class="mock-line"></div>
-                <div class="mock-line short"></div>
-                <div class="mock-art">SPEC_01 // SPREAD</div>
-                <div class="mock-line"></div>
-                <div class="mock-line short"></div>
+          <div class="antique-bookstand">
+            <div class="sample-book-3d">
+              <!-- Left Page -->
+              <div class="sample-page sample-page-left">
+                <div class="sample-page-inner">
+                  <div class="mock-header-flourish">❦ ❖ ❦</div>
+                  <div class="mock-book-title">THE MIDNIGHT ROOM</div>
+                  <div class="mock-book-rule"></div>
+                  <div class="mock-paragraph">
+                    <span class="mock-dropcap">I</span>
+                    <div class="mock-text-flow">
+                      <div class="mock-line"></div>
+                      <div class="mock-line"></div>
+                      <div class="mock-line short"></div>
+                    </div>
+                  </div>
+                  <div class="mock-line"></div>
+                  <div class="mock-line"></div>
+                  <div class="mock-line short"></div>
+                  <div class="mock-plate-crest">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+                      <path d="M12 3v18"/>
+                      <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+                    </svg>
+                    <span>SILENTIUM ET LIBRI</span>
+                  </div>
+                </div>
+                <div class="mock-folio-num">FOLIO IV</div>
               </div>
-              <div style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted);">P. 04</div>
-            </div>
-            <div class="sample-page sample-page-right">
-              <div>
-                <div class="mock-line"></div>
-                <div class="mock-line"></div>
-                <div class="mock-line short"></div>
-                <div class="mock-art">SPEC_02 // MESH</div>
-                <div class="mock-line"></div>
-                <div class="mock-line"></div>
+
+              <!-- Right Page -->
+              <div class="sample-page sample-page-right">
+                <div class="sample-page-inner">
+                  <div class="mock-header-flourish">❦ ❖ ❦</div>
+                  <div class="mock-book-title">DE ARTE LEGENDI</div>
+                  <div class="mock-book-rule"></div>
+                  <div class="mock-line"></div>
+                  <div class="mock-line"></div>
+                  <div class="mock-line short"></div>
+                  <div class="mock-quote-box">
+                    "A room without books is like a body without a soul."
+                  </div>
+                  <div class="mock-line"></div>
+                  <div class="mock-line short"></div>
+                </div>
+                <div class="mock-folio-num">FOLIO V</div>
               </div>
-              <div style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); text-align: right;">P. 05</div>
-            </div>
-            <div class="sample-turning-leaf">
-              <div>
-                <div class="mock-line title"></div>
-                <div class="mock-line"></div>
-                <div class="mock-line short"></div>
-                <div class="mock-art">3D CURL ENGINE</div>
+
+              <!-- Turning Leaf with 3D Curl -->
+              <div class="sample-turning-leaf">
+                <div class="sample-page-inner">
+                  <div class="mock-header-flourish">❦ ❖ ❦</div>
+                  <div class="mock-book-title">PHYSICA FOLIARUM</div>
+                  <div class="mock-book-rule"></div>
+                  <div class="mock-line"></div>
+                  <div class="mock-line short"></div>
+                  <div class="mock-plate-crest">
+                    <span>EX LIBRIS</span>
+                  </div>
+                </div>
+                <div class="mock-folio-num">FOLIO III</div>
               </div>
-              <div style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); text-align: right;">P. 03</div>
             </div>
           </div>
           <div class="showcase-caption">
-            <span>Two-Page Spread • Spine Depth Shading</span>
-            <span style="color: var(--accent-active);">Hover to Test Curl</span>
+            <span>Dual-Folio Spread • Central Crease Depth • Silk Ribbon Marker</span>
+            <span class="showcase-caption-action">Hover to Turn Leaf ➔</span>
           </div>
         </div>
       </section>
 
-      <!-- Drag and Drop Upload Panel -->
+      <!-- Archival Leather Desk Blotter Upload Tray -->
       <section class="upload-wrapper" id="upload-section">
         <div class="upload-card" id="drop-zone" role="region" aria-label="PDF File Upload Dropzone" tabindex="0">
           <input type="file" id="pdf-file-input" accept=".pdf,application/pdf" class="sr-only" />
+
+          <!-- Brass Corner Brackets -->
+          <div class="brass-corner brass-corner-tl" aria-hidden="true"></div>
+          <div class="brass-corner brass-corner-tr" aria-hidden="true"></div>
+          <div class="brass-corner brass-corner-bl" aria-hidden="true"></div>
+          <div class="brass-corner brass-corner-br" aria-hidden="true"></div>
           
           <div class="upload-icon-circle">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <line x1="12" y1="18" x2="12" y2="12"></line>
-              <line x1="9" y1="15" x2="15" y2="15"></line>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+              <path d="M12 2v20"/>
+              <path d="M9 7h6"/>
+              <path d="M9 11h6"/>
             </svg>
           </div>
 
-          <h2 class="upload-heading">Select or Drop PDF Document</h2>
-          <p class="upload-subtext">Supports single-page, multi-page, portrait, and landscape documents</p>
+          <div class="upload-tagline">RECEIVING DESK FOR YOUR MANUSCRIPT</div>
+          <h2 class="upload-heading">Select or Lay Down a PDF Document</h2>
+          <p class="upload-subtext">Drop any single-page, multi-page, portrait, or landscape PDF document upon the desk</p>
 
           <div class="upload-buttons">
             <button type="button" class="btn btn-secondary" id="choose-pdf-btn">
-              Browse Local PDF
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              Browse Local PDF Document
             </button>
           </div>
 
-          <!-- Selected File Summary -->
+          <!-- Selected File Archival Summary -->
           <div class="selected-file-panel" id="selected-file-panel">
             <div class="file-meta-row">
               <div class="file-info">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                  <polyline points="14 2 14 8 20 8"></polyline>
-                </svg>
+                <div class="doc-wax-seal" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                  </svg>
+                </div>
                 <div class="file-text-col">
                   <div class="file-name" id="selected-file-name">document.pdf</div>
                   <div class="file-size" id="selected-file-size">0 MB</div>
                 </div>
               </div>
               <button type="button" class="btn btn-ghost" id="remove-file-btn" aria-label="Remove selected PDF file">
-                Remove
+                Remove Folio
               </button>
             </div>
 
             <div class="book-config-row">
               <label class="checkbox-label" title="When enabled, Page 1 is shown as a closed front cover and the final page as a back cover.">
                 <input type="checkbox" id="hardcover-toggle" checked />
-                <span>Treat first &amp; last pages as book covers</span>
+                <span>Bind first &amp; final leaves as hardcover book covers</span>
               </label>
 
               <button type="button" class="btn btn-primary" id="generate-flipbook-btn">
-                Generate Flipbook →
+                Open Book in Reading Room →
               </button>
             </div>
           </div>
 
           <!-- Password Prompt for Encrypted PDFs -->
           <div class="password-panel" id="password-panel">
-            <div style="font-family: var(--font-mono); font-weight: 700; font-size: 0.88rem; color: var(--warn-text);">// ENCRYPTED PDF DETECTED</div>
-            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 0.25rem;">
-              This document is password protected. Enter the password below to decrypt and render locally.
+            <div class="password-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              <span>PROTECTED FOLIO DETECTED</span>
+            </div>
+            <p class="password-desc">
+              This document requires an archival cipher to open. Enter the password below to decrypt locally in memory.
             </p>
             <div class="password-input-group">
-              <input type="password" id="pdf-password-input" class="text-input" placeholder="Enter PDF password..." />
-              <button type="button" class="btn btn-primary" id="submit-password-btn">Unlock</button>
+              <input type="password" id="pdf-password-input" class="text-input" placeholder="Enter document password..." />
+              <button type="button" class="btn btn-primary" id="submit-password-btn">Unlock Folio</button>
             </div>
           </div>
 
@@ -1603,14 +1984,14 @@
           <!-- Real-Time PDF Rendering Progress -->
           <div class="progress-panel" id="progress-panel" aria-live="polite">
             <div class="progress-header">
-              <span id="progress-status-text">Reading PDF...</span>
+              <span id="progress-status-text">Preparing Folios...</span>
               <span class="progress-pct" id="progress-percentage">0%</span>
             </div>
             <div class="progress-track">
               <div class="progress-fill" id="progress-bar-fill"></div>
             </div>
             <div class="progress-footer">
-              <span id="progress-page-count">Preparing pages...</span>
+              <span id="progress-page-count">Preparing initial folios...</span>
               <button type="button" class="btn btn-ghost" id="cancel-render-btn" style="padding: 0.25rem 0.6rem; font-size: 0.78rem;">
                 Cancel
               </button>
@@ -1618,45 +1999,61 @@
           </div>
 
           <div class="privacy-footnote">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
             </svg>
-            <span>PRIVACY: PDF rendered locally via browser Web Workers • Never transmitted across any network</span>
+            <span>SANCTUARY PLEDGE: Rendered entirely in local browser memory via Web Workers • Zero data is transmitted or retained</span>
           </div>
         </div>
       </section>
 
-      <!-- Technical Capabilities -->
+      <!-- Archival Specifications Strip -->
       <section class="features-section">
         <div class="feature-item">
-          <h3>01 // DUAL-PAGE SPREAD</h3>
-          <p>Automatic two-page editorial spreads on desktop monitors and responsive single-page mode on mobile screens.</p>
+          <div class="feature-index">I</div>
+          <h3>DUAL-LEAF FOLIO SPREAD</h3>
+          <p>Balanced two-page spreads on desktop screens with automatic single-folio orientation on handheld reading devices.</p>
         </div>
         <div class="feature-item">
-          <h3>02 // 3D CURL PHYSICS</h3>
-          <p>Tactile drag-and-flip corner mechanics with dynamic mesh deformation and central spine shadow depth.</p>
+          <div class="feature-index">II</div>
+          <h3>LEAF-CURL &amp; SPINE SHADING</h3>
+          <p>Authentic tactile corner dragging, simulated paper stiffness, and dynamic central gutter shadow depth.</p>
         </div>
         <div class="feature-item">
-          <h3>03 // DEEP VECTOR ZOOM</h3>
-          <p>Multi-level magnification with full-bleed panning, scrollwheel support, and edge-to-edge canvas inspection.</p>
+          <div class="feature-index">III</div>
+          <h3>ARCHIVAL MAGNIFIER</h3>
+          <p>Continuous vector-scale magnification with smooth mousewheel zoom and drag-to-pan edge inspection.</p>
         </div>
         <div class="feature-item">
-          <h3>04 // IN-MEMORY ENGINE</h3>
-          <p>Zero cloud dependencies or analytics. Document buffers are immediately reclaimed upon closing.</p>
+          <div class="feature-index">IV</div>
+          <h3>ABSOLUTE PRIVACY</h3>
+          <p>Zero server uploads, cookies, or tracking. Document memory buffers are cleared the moment the book is closed.</p>
         </div>
       </section>
     </main>
+
+    <!-- Colophon Footer -->
+    <footer class="colophon-footer">
+      <div class="colophon-divider">
+        <span class="colophon-line"></span>
+        <span class="colophon-seal">❦ ❖ ❦</span>
+        <span class="colophon-line"></span>
+      </div>
+      <div class="colophon-brand">THE MIDNIGHT READING ROOM</div>
+      <p class="colophon-sub">An Intimate Digital Study for Physical Reading • Bound Locally in WebAssembly</p>
+      <div class="colophon-creds">Ex Libris Privatis • No Cookies • No Transmission</div>
+    </footer>
   </div>
 
   <!-- ========================================================================
-       STEP 4, 5 & 6: INTERACTIVE 3D FLIPBOOK READER VIEW
+       INTERACTIVE FLIPBOOK READER — THE DARK WALNUT READING TABLE
        ======================================================================== -->
   <div id="reader-view" class="hidden" role="application" aria-label="Interactive Book Reader">
     <!-- Top Bar -->
     <header class="reader-topbar">
       <div class="reader-doc-info">
         <button type="button" class="icon-btn" id="toc-toggle-btn" title="Table of Contents" aria-label="Toggle Table of Contents" hidden>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="8" y1="6" x2="21" y2="6"></line>
             <line x1="8" y1="12" x2="21" y2="12"></line>
             <line x1="8" y1="18" x2="21" y2="18"></line>
@@ -1667,44 +2064,44 @@
           <span>Contents</span>
         </button>
         <span class="reader-doc-title" id="reader-filename">Document.pdf</span>
-        <span class="reader-badge" id="reader-total-badge">0 Pages</span>
+        <span class="reader-badge" id="reader-total-badge">0 Folios</span>
       </div>
 
       <div class="reader-top-actions">
-        <button type="button" class="icon-btn" id="download-pdf-btn" title="Open or Download Original PDF" aria-label="Download Original PDF">
+        <button type="button" class="icon-btn" id="download-pdf-btn" title="Save or Open Original PDF Folio" aria-label="Download Original PDF">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
             <polyline points="7 10 12 15 17 10"></polyline>
             <line x1="12" y1="15" x2="12" y2="3"></line>
           </svg>
-          <span>Original PDF</span>
+          <span>Original Folio</span>
         </button>
-        <button type="button" class="icon-btn" id="help-modal-btn" title="Keyboard & Touch Shortcuts (?)" aria-label="Reading Help and Shortcuts">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <button type="button" class="icon-btn" id="help-modal-btn" title="Reading Guide & Shortcuts (?)" aria-label="Reading Help and Shortcuts">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="10"></circle>
             <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
             <line x1="12" y1="17" x2="12.01" y2="17"></line>
           </svg>
         </button>
-        <button type="button" class="icon-btn" id="close-reader-btn" title="Close Book and Return to Upload" aria-label="Close Flipbook">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <button type="button" class="icon-btn" id="close-reader-btn" title="Close Book and Return to Reading Desk" aria-label="Close Flipbook">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
-          <span>Close Book</span>
+          <span>Return to Desk</span>
         </button>
       </div>
     </header>
 
-    <!-- Optional Table of Contents Drawer -->
+    <!-- Table of Contents Drawer -->
     <aside class="toc-drawer" id="toc-drawer" aria-label="Document Outline">
-      <div class="toc-title">Table of Contents</div>
+      <div class="toc-title">Folio Directory</div>
       <ul class="toc-list" id="toc-list"></ul>
     </aside>
 
-    <!-- Central Book Viewport -->
+    <!-- Central Dark Walnut Reading Table Stage -->
     <div class="reader-stage" id="reader-stage">
-      <button type="button" class="stage-nav-arrow stage-nav-prev" id="stage-prev-btn" title="Previous Page (Left Arrow)" aria-label="Previous Page">
+      <button type="button" class="stage-nav-arrow stage-nav-prev" id="stage-prev-btn" title="Previous Leaf (Left Arrow)" aria-label="Previous Page">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
           <polyline points="15 18 9 12 15 6"></polyline>
         </svg>
@@ -1714,7 +2111,7 @@
         <div id="flipbook-container"></div>
       </div>
 
-      <button type="button" class="stage-nav-arrow stage-nav-next" id="stage-next-btn" title="Next Page (Right Arrow)" aria-label="Next Page">
+      <button type="button" class="stage-nav-arrow stage-nav-next" id="stage-next-btn" title="Next Leaf (Right Arrow)" aria-label="Next Page">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
           <polyline points="9 18 15 12 9 6"></polyline>
         </svg>
@@ -1726,39 +2123,39 @@
       <!-- Left: Restart & Spread Navigation -->
       <div class="toolbar-group">
         <button type="button" class="icon-btn" id="restart-book-btn" title="Return to Front Cover (Home)" aria-label="Restart Reading">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polygon points="19 20 9 12 19 4 19 20"></polygon>
             <line x1="5" y1="19" x2="5" y2="5"></line>
           </svg>
         </button>
-        <button type="button" class="icon-btn" id="toolbar-prev-btn" title="Previous Page (Left Arrow)" aria-label="Previous Page">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <button type="button" class="icon-btn" id="toolbar-prev-btn" title="Previous Leaf (Left Arrow)" aria-label="Previous Page">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="15 18 9 12 15 6"></polyline>
           </svg>
-          <span>Prev</span>
+          <span>Prev Leaf</span>
         </button>
         <div class="page-indicator-pill" id="page-indicator" aria-live="polite">
           Cover (1 of 1)
         </div>
-        <button type="button" class="icon-btn" id="toolbar-next-btn" title="Next Page (Right Arrow)" aria-label="Next Page">
-          <span>Next</span>
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <button type="button" class="icon-btn" id="toolbar-next-btn" title="Next Leaf (Right Arrow)" aria-label="Next Page">
+          <span>Next Leaf</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="9 18 15 12 9 6"></polyline>
           </svg>
         </button>
       </div>
 
       <!-- Center: Direct Go-To Page Form -->
-      <form class="goto-form" id="goto-page-form" aria-label="Jump to specific page">
-        <label for="goto-page-input" style="font-size: 0.8rem; color: #B8B2A8;">Go to:</label>
+      <form class="goto-form" id="goto-page-form" aria-label="Jump to specific folio">
+        <label for="goto-page-input" style="font-family: var(--font-monumental); font-size: 0.74rem; letter-spacing: 0.06em; color: var(--color-parchment-dim);">Folio:</label>
         <input type="number" id="goto-page-input" class="goto-input" min="1" max="1" placeholder="#" aria-label="Page number" />
-        <button type="submit" class="icon-btn" style="background: rgba(255,255,255,0.08);">Go</button>
+        <button type="submit" class="icon-btn" style="background: rgba(179,148,93,0.12); border-color: var(--border-medium);">Go</button>
       </form>
 
       <!-- Right: Zoom & Fullscreen Controls -->
       <div class="toolbar-group">
         <button type="button" class="icon-btn" id="zoom-out-btn" title="Zoom Out (-)" aria-label="Zoom Out">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             <line x1="8" y1="11" x2="14" y2="11"></line>
@@ -1766,18 +2163,18 @@
         </button>
         <span class="zoom-readout" id="zoom-readout">100%</span>
         <button type="button" class="icon-btn" id="zoom-in-btn" title="Zoom In (+)" aria-label="Zoom In">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             <line x1="11" y1="8" x2="11" y2="14"></line>
             <line x1="8" y1="11" x2="14" y2="11"></line>
           </svg>
         </button>
-        <button type="button" class="icon-btn" id="zoom-reset-btn" title="Fit Book to Screen (0)" aria-label="Fit to Screen">
-          Fit
+        <button type="button" class="icon-btn" id="zoom-reset-btn" title="Fit Book to Reading Desk (0)" aria-label="Fit to Screen">
+          Fit Desk
         </button>
-        <button type="button" class="icon-btn" id="fullscreen-btn" title="Toggle Fullscreen (F)" aria-label="Toggle Fullscreen">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="fullscreen-icon">
+        <button type="button" class="icon-btn" id="fullscreen-btn" title="Immersive Sanctuary Mode (F)" aria-label="Toggle Fullscreen">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="fullscreen-icon">
             <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
           </svg>
         </button>
@@ -1785,28 +2182,28 @@
     </footer>
   </div>
 
-  <!-- Help & Controls Modal -->
+  <!-- Help & Reading Guide Modal -->
   <div class="modal-backdrop" id="help-modal" role="dialog" aria-modal="true" aria-labelledby="help-modal-title">
     <div class="modal-dialog">
       <div class="modal-header">
-        <h2 id="help-modal-title">// SHORTCUT REFERENCE</h2>
+        <h2 id="help-modal-title">THE READING DESK GUIDE</h2>
         <button type="button" class="icon-btn" id="close-help-btn" aria-label="Close Help Dialog">&#10005;</button>
       </div>
       <div class="shortcut-grid">
         <div class="shortcut-row">
-          <span>Turn Page Forward</span>
+          <span>Turn Leaf Forward</span>
           <span>Click Right Page / Drag Corner / <kbd>&rarr;</kbd></span>
         </div>
         <div class="shortcut-row">
-          <span>Turn Page Backward</span>
+          <span>Turn Leaf Backward</span>
           <span>Click Left Page / Drag Corner / <kbd>&larr;</kbd></span>
         </div>
         <div class="shortcut-row">
-          <span>Touch Screen Navigation</span>
-          <span>Swipe Left / Swipe Right</span>
+          <span>Touch Navigation</span>
+          <span>Swipe Left / Swipe Right / Margin Tap</span>
         </div>
         <div class="shortcut-row">
-          <span>Jump to Front Cover</span>
+          <span>Return to Front Cover</span>
           <kbd>Home</kbd>
         </div>
         <div class="shortcut-row">
@@ -1814,15 +2211,15 @@
           <kbd>End</kbd>
         </div>
         <div class="shortcut-row">
-          <span>Zoom In / Out</span>
+          <span>Desk Magnifier (Zoom)</span>
           <span><kbd>Ctrl</kbd> + Scroll or <kbd>+</kbd> / <kbd>-</kbd></span>
         </div>
         <div class="shortcut-row">
-          <span>Reset Zoom to Fit</span>
+          <span>Reset Zoom to Desk</span>
           <kbd>0</kbd>
         </div>
         <div class="shortcut-row">
-          <span>Toggle Full Screen</span>
+          <span>Immersive Sanctuary Mode</span>
           <kbd>F</kbd> or <kbd>Esc</kbd>
         </div>
       </div>
@@ -1830,9 +2227,9 @@
   </div>
 
   <!-- ========================================================================
-       APPLICATION LOGIC (MODULAR ES6+)
+       APPLICATION LOGIC (PRESERVED IN FULL)
        ======================================================================== -->
-       <script>
+  <script>
   // Configure PDF.js Worker
   if (window.pdfjsLib) {
     window.pdfjsLib.GlobalWorkerOptions.workerSrc =
@@ -2336,12 +2733,62 @@
     AppState.defaultAspectRatio = 0.75;
 
     const specs = [
-      { title: 'SYSTEM SPECIMEN // 01', subtitle: 'Interactive 3D Leaf Curl & Physics Engine', footer: 'FRONT COVER // FLIPBOOK ENGINE', bg: '#121A14', border: '#2B3A2E', dark: true },
-      { title: 'I. Classical Proportion', subtitle: 'Dual-page spreads balanced for editorial reading.', footer: 'PAGE 02 // TECHNICAL SPEC', bg: '#FAFAF7', border: '#DCD7CD', dark: false },
-      { title: 'II. Curl Mesh Physics', subtitle: 'Simulated paper stiffness with reactive spine shading.', footer: 'PAGE 03 // TECHNICAL SPEC', bg: '#FAFAF7', border: '#DCD7CD', dark: false },
-      { title: 'III. Vector Scale Layer', subtitle: 'Pan-and-zoom inspection with full viewport bounds.', footer: 'PAGE 04 // TECHNICAL SPEC', bg: '#FAFAF7', border: '#DCD7CD', dark: false },
-      { title: 'IV. Zero Cloud Latency', subtitle: 'Rendered entirely via client-local WebAssembly.', footer: 'PAGE 05 // TECHNICAL SPEC', bg: '#FAFAF7', border: '#DCD7CD', dark: false },
-      { title: 'COLOPHON // END OF FILE', subtitle: 'Rendered locally in FlipBook Studio.', footer: 'BACK COVER // FLIPBOOK ENGINE', bg: '#121A14', border: '#2B3A2E', dark: true }
+      {
+        title: "THE MIDNIGHT READING ROOM",
+        subtitle: "A Specimen of Digital Bibliomania & Leaf-Curl Physics",
+        body: "Ex Libris Bibliothecae Privatae • MCMXXVI\nBound in Browser Memory with Zero Network Latency",
+        footer: "FRONTISPIECE // HARDBOUND FRONT COVER",
+        bg: "#1C2D24",
+        border: "#B3945D",
+        dark: true,
+        isCover: true
+      },
+      {
+        title: "I. The Sanctuary of Books",
+        subtitle: "A private room where documents regain their physical quietude.",
+        body: "“Every book has a room of its own.”\n\nWhen letters rest on aged parchment, reading ceases to be a restless, unending scroll and becomes a tactile ritual. Spreads open symmetrically across the desk, shadows gather softly along the spine, and the eye travels at the pace of human contemplation.",
+        footer: "FOLIO II // THE MIDNIGHT ROOM",
+        bg: "#FAF6ED",
+        border: "#D8C8A8",
+        dark: false
+      },
+      {
+        title: "II. Physics of the Leaf",
+        subtitle: "The calibrated weight and curvature of turning paper.",
+        body: "The three-dimensional leaf engine simulates paper stiffness and atmospheric lighting.\n\nCorners yield naturally to mouse and fingertip alike, casting believable shadows onto the page beneath. The central binding recreates the subtle crease and curvature of physical signatures sewn into dark morocco leather.",
+        footer: "FOLIO III // THE MIDNIGHT ROOM",
+        bg: "#FAF6ED",
+        border: "#D8C8A8",
+        dark: false
+      },
+      {
+        title: "III. The Archival Reading Desk",
+        subtitle: "Dark walnut, forest leather, and warm desk-lamp illumination.",
+        body: "The reading table is dressed in aged walnut and dark green desk leather, illuminated by a warm lamp glow.\n\nMagnification allows deep vector inspection of fine engravings and typography, with full-canvas edge panning and effortless return to fit.",
+        footer: "FOLIO IV // THE MIDNIGHT ROOM",
+        bg: "#FAF6ED",
+        border: "#D8C8A8",
+        dark: false
+      },
+      {
+        title: "IV. The Sanctuary Pledge",
+        subtitle: "Complete in-memory isolation for private, quiet reading.",
+        body: "Zero cloud dependencies, zero external analytics, zero tracking cookies.\n\nDocuments are decoded purely within client Web Workers via WebAssembly. When the reader is closed, memory buffers are surrendered immediately back to the operating system.",
+        footer: "FOLIO V // THE MIDNIGHT ROOM",
+        bg: "#FAF6ED",
+        border: "#D8C8A8",
+        dark: false
+      },
+      {
+        title: "COLOPHON",
+        subtitle: "Finis Libri • The Midnight Reading Room",
+        body: "Privately printed and bound locally in client memory.\n\nRendered via PDF.js and StPageFlip.\nAll rights reserved to the quiet mind.",
+        footer: "BACK COVER // HARDBOUND LEAF",
+        bg: "#1C2D24",
+        border: "#B3945D",
+        dark: true,
+        isCover: true
+      }
     ];
 
     for (let i = 0; i < specs.length; i++) {
@@ -2350,27 +2797,154 @@
       canvas.width = 900;
       canvas.height = 1200;
       const ctx = canvas.getContext('2d');
+
+      // Surface fill
       ctx.fillStyle = s.bg;
       ctx.fillRect(0, 0, 900, 1200);
-      ctx.strokeStyle = s.border;
-      ctx.lineWidth = 3;
-      ctx.strokeRect(55, 55, 790, 1090);
-      ctx.fillStyle = s.dark ? '#E0E6DC' : '#1C1B18';
-      ctx.font = 'bold 36px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText(s.title, 450, 560);
-      ctx.fillStyle = s.dark ? '#829184' : '#5C5953';
-      ctx.font = '22px sans-serif';
-      ctx.fillText(s.subtitle, 450, 625);
-      ctx.font = '16px monospace';
-      ctx.fillText(s.footer, 450, 1105);
 
-      const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.9));
+      if (s.isCover) {
+        // Gilded Leather Cover
+        ctx.strokeStyle = '#B3945D';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(42, 42, 816, 1116);
+        ctx.lineWidth = 1;
+        ctx.strokeRect(52, 52, 796, 1096);
+
+        // Corner ornaments
+        const drawCorner = (x, y, dx, dy) => {
+          ctx.beginPath();
+          ctx.moveTo(x, y + dy * 32);
+          ctx.lineTo(x, y);
+          ctx.lineTo(x + dx * 32, y);
+          ctx.strokeStyle = '#CFB27A';
+          ctx.lineWidth = 3;
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(x + dx * 16, y + dy * 16, 4, 0, Math.PI * 2);
+          ctx.fillStyle = '#CFB27A';
+          ctx.fill();
+        };
+        drawCorner(64, 64, 1, 1);
+        drawCorner(836, 64, -1, 1);
+        drawCorner(64, 1136, 1, -1);
+        drawCorner(836, 1136, -1, -1);
+
+        // Center emblem ring
+        ctx.strokeStyle = '#B3945D';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(450, 420, 52, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.fillStyle = '#CFB27A';
+        ctx.font = '26px serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('❦ ❖ ❦', 450, 428);
+
+        // Title
+        ctx.fillStyle = '#EDE3CE';
+        ctx.font = 'bold 38px "Cormorant Garamond", Georgia, serif';
+        ctx.fillText(s.title, 450, 560);
+
+        // Subtitle
+        ctx.fillStyle = '#CFB27A';
+        ctx.font = 'italic 23px "Libre Baskerville", Georgia, serif';
+        ctx.fillText(s.subtitle, 450, 625);
+
+        // Rule
+        ctx.strokeStyle = '#8A6F40';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(300, 665);
+        ctx.lineTo(600, 665);
+        ctx.stroke();
+
+        // Epigraph body
+        ctx.fillStyle = '#D8C8A8';
+        ctx.font = '18px "Space Mono", monospace';
+        const lines = s.body.split('\n');
+        lines.forEach((l, idx) => {
+          ctx.fillText(l, 450, 720 + idx * 32);
+        });
+
+        // Cover Footer
+        ctx.fillStyle = '#8A6F40';
+        ctx.font = '14px "Space Mono", monospace';
+        ctx.fillText(s.footer, 450, 1115);
+      } else {
+        // Interior Parchment Page
+        ctx.strokeStyle = '#D8C8A8';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(55, 55, 790, 1090);
+        ctx.strokeStyle = '#E8DFCE';
+        ctx.lineWidth = 0.8;
+        ctx.strokeRect(62, 62, 776, 1076);
+
+        // Running Header
+        ctx.fillStyle = '#8A6F40';
+        ctx.font = '14px serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('❦   THE MIDNIGHT READING ROOM   ❦', 450, 105);
+
+        ctx.strokeStyle = '#D8C8A8';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(180, 120);
+        ctx.lineTo(720, 120);
+        ctx.stroke();
+
+        // Chapter Title
+        ctx.fillStyle = '#29251F';
+        ctx.font = 'bold 36px "Cormorant Garamond", Georgia, serif';
+        ctx.fillText(s.title, 450, 230);
+
+        // Subtitle
+        ctx.fillStyle = '#754039';
+        ctx.font = 'italic 20px "Libre Baskerville", Georgia, serif';
+        ctx.fillText(s.subtitle, 450, 275);
+
+        // Body Text with Word Wrap
+        ctx.fillStyle = '#29251F';
+        ctx.font = '19px "Libre Baskerville", Georgia, serif';
+        ctx.textAlign = 'left';
+
+        const wrapText = (text, x, y, maxWidth, lineHeight) => {
+          const paragraphs = text.split('\n\n');
+          let currentY = y;
+          paragraphs.forEach(p => {
+            const words = p.split(' ');
+            let line = '';
+            for (let n = 0; n < words.length; n++) {
+              const testLine = line + words[n] + ' ';
+              const metrics = ctx.measureText(testLine);
+              if (metrics.width > maxWidth && n > 0) {
+                ctx.fillText(line, x, currentY);
+                line = words[n] + ' ';
+                currentY += lineHeight;
+              } else {
+                line = testLine;
+              }
+            }
+            ctx.fillText(line, x, currentY);
+            currentY += lineHeight * 1.5;
+          });
+        };
+
+        wrapText(s.body, 130, 370, 640, 34);
+
+        // Page Folio
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#8A6F40';
+        ctx.font = '14px "Space Mono", monospace';
+        ctx.fillText(s.footer, 450, 1105);
+      }
+
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.92));
       AppState.pageCache.set(i + 1, { status: 'ready', url: URL.createObjectURL(blob) });
     }
 
     AppState.isProcessing = false;
-    openReaderInterface('System-Specimen-Sample.pdf');
+    openReaderInterface('The-Midnight-Reading-Room-Folio.pdf');
   }
 
   function openReaderInterface(filename) {
